@@ -1,9 +1,3 @@
-// ============================================
-// MODERADOR-EXPORTAR.JS
-// Exportação de dados em CSV
-// ============================================
-
-// COLE ESTE CÓDIGO NO FINAL DO moderador.js
 
 // ============================================
 // EXPORTAR: ATUALIZAR SELECTS
