@@ -343,33 +343,38 @@ async function deletarEnquete(id) {
 // CADASTRO: QUIZ (apenas estrutura básica, perguntas em outro arquivo)
 // ============================================
 
-function renderizarListaQuizzes() {
-  const lista = document.getElementById('listaQuizzes');
-  
-  if (quizzes.length === 0) {
-    lista.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum quiz cadastrado</p>';
-    return;
-  }
-  
-  lista.innerHTML = quizzes.map(q => `
-    <div class="p-4 border rounded hover:shadow-md transition">
-      <div class="flex justify-between items-start">
-        <div class="flex-1">
-          <h4 class="font-bold">${esc(q.nome)}</h4>
-          <p class="text-sm text-gray-600">${q.total_perguntas} perguntas • Status: ${q.status}</p>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="editarQuiz('${q.id}')" class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
-            ✏️ Gerenciar
-          </button>
-          <button onclick="deletarQuiz('${q.id}')" class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600">
-            🗑️ Excluir
-          </button>
-        </div>
+lista.innerHTML = quizzes.map(q => `
+  <div class="p-4 border rounded hover:shadow-md transition">
+    <div class="flex justify-between items-start">
+      <div class="flex-1">
+        <h4 class="font-bold">${esc(q.nome)}</h4>
+        <p class="text-sm text-gray-600">
+          ${q.total_perguntas} perguntas • Status: ${q.status}
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <button
+          onclick="editarTituloQuiz('${q.id}')"
+          class="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
+        >
+          ✏️ Editar
+        </button>
+        <button
+          onclick="editarQuiz('${q.id}')"
+          class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+        >
+          📚 Gerenciar
+        </button>
+        <button
+          onclick="deletarQuiz('${q.id}')"
+          class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+        >
+          🗑️ Excluir
+        </button>
       </div>
     </div>
-  `).join('');
-}
+  </div>
+`).join('');
 
 function abrirModalQuiz(id = null) {
   const quiz = id ? quizzes.find(q => q.id === id) : null;
@@ -431,9 +436,13 @@ async function salvarQuiz(event) {
   }
 }
 
-function editarQuiz(id) {
-  abrirModalQuiz(id);
+function editarTituloQuiz(id) {
+  const quiz = quizzes.find(q => q.id === id);
+  if (!quiz) return;
+  // Função está definida no moderador-quiz.js
+  abrirModalEditarQuiz(quiz);
 }
+
 
 async function deletarQuiz(id) {
   if (!confirm('Tem certeza que deseja excluir este quiz e todas as suas perguntas?')) return;
