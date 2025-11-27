@@ -688,21 +688,107 @@ async function salvarPerguntaQuiz(event, id = null) {
 function editarPerguntaQuiz(id) {
   const pergunta = perguntasQuiz.find(p => p.id === id);
   if (!pergunta) return;
-  
+
   const modalPergunta = `
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="fecharModalPergunta(event)">
       <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
         <h3 class="text-xl font-bold mb-4">Editar Pergunta ${pergunta.ordem}</h3>
         <form onsubmit="salvarPerguntaQuiz(event, '${id}')">
-          <!-- (resto igual ao seu atual) -->
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm font-bold mb-1">Pergunta *</label>
+              <textarea id="quizPergunta" rows="2" required class="w-full p-2 border rounded">${esc(pergunta.pergunta)}</textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold mb-1">Opção A *</label>
+                <input
+                  type="text"
+                  id="quizOpcaoA"
+                  value="${esc(pergunta.opcao_a)}"
+                  required
+                  class="w-full p-2 border rounded"
+                >
+              </div>
+              <div>
+                <label class="block text-sm font-bold mb-1">Opção B *</label>
+                <input
+                  type="text"
+                  id="quizOpcaoB"
+                  value="${esc(pergunta.opcao_b)}"
+                  required
+                  class="w-full p-2 border rounded"
+                >
+              </div>
+              <div>
+                <label class="block text-sm font-bold mb-1">Opção C *</label>
+                <input
+                  type="text"
+                  id="quizOpcaoC"
+                  value="${esc(pergunta.opcao_c)}"
+                  required
+                  class="w-full p-2 border rounded"
+                >
+              </div>
+              <div>
+                <label class="block text-sm font-bold mb-1">Opção D *</label>
+                <input
+                  type="text"
+                  id="quizOpcaoD"
+                  value="${esc(pergunta.opcao_d)}"
+                  required
+                  class="w-full p-2 border rounded"
+                >
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-bold mb-1">Resposta Correta *</label>
+                <select id="quizRespostaCorreta" required class="w-full p-2 border rounded">
+                  <option value="A" ${pergunta.resposta_correta === 'A' ? 'selected' : ''}>A</option>
+                  <option value="B" ${pergunta.resposta_correta === 'B' ? 'selected' : ''}>B</option>
+                  <option value="C" ${pergunta.resposta_correta === 'C' ? 'selected' : ''}>C</option>
+                  <option value="D" ${pergunta.resposta_correta === 'D' ? 'selected' : ''}>D</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold mb-1">Tempo Limite (segundos) *</label>
+                <input
+                  type="number"
+                  id="quizTempoLimite"
+                  value="${pergunta.tempo_limite_seg}"
+                  min="10"
+                  max="120"
+                  required
+                  class="w-full p-2 border rounded"
+                >
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button
+              type="submit"
+              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              💾 Salvar
+            </button>
+            <button
+              type="button"
+              onclick="fecharModalPergunta()"
+              class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Cancelar
+            </button>
+          </div>
         </form>
       </div>
     </div>
   `;
-  
+
   const container = document.getElementById('modalContainer');
   container.innerHTML = modalPergunta;
 }
+
 async function deletarPerguntaQuiz(id) {
   if (!confirm('Excluir esta pergunta?')) return;
   
