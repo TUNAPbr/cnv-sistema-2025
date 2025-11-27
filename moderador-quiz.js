@@ -1,9 +1,3 @@
-// ============================================
-// MODERADOR-QUIZ.JS
-// Gerenciamento Completo do Quiz
-// ============================================
-
-// COLE ESTE CÓDIGO NO FINAL DO moderador.js
 
 // ============================================
 // QUIZ: SELEÇÃO E CARREGAMENTO
