@@ -241,20 +241,30 @@ async function mudarModo(novoModo) {
   if (!confirm(`Mudar para modo "${novoModo.toUpperCase()}"? Isso vai limpar o estado atual das telas.`)) {
     return;
   }
-  
+
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('cnv_sessao')
       .update({
         modo: novoModo,
         metadata: { limpar_cache: true, timestamp: new Date().toISOString() }
       })
-      .eq('id', 1);
-    
+      .eq('id', 1)
+      .select()
+      .single();
+
     if (error) throw error;
-    
+
+    // 🔹 Atualiza estado local imediatamente
+    sessaoAtual = data || { ...(sessaoAtual || {}), modo: novoModo };
+    modoAtivo = sessaoAtual.modo;
+
+    // 🔹 Atualiza a UI na hora
+    atualizarBotoesModo();
+    atualizarStatusModo();
+    atualizarControle();
+
     alert(`✅ Modo alterado para: ${novoModo.toUpperCase()}`);
-    
   } catch (error) {
     console.error('Erro ao mudar modo:', error);
     alert('❌ Erro ao mudar modo');
