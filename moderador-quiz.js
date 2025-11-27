@@ -486,6 +486,82 @@ async function carregarRankingQuiz() {
     </div>
   `;
 }
+// ============================================
+// QUIZ: GERENCIAR nome quiz
+// ============================================
+
+function abrirModalEditarQuiz(quiz) {
+  const modal = `
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="fecharModal(event)">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" onclick="event.stopPropagation()">
+
+        <h3 class="text-xl font-bold mb-4">Editar Quiz</h3>
+
+        <form onsubmit="salvarEdicaoQuiz(event, '${quiz.id}')">
+          <div class="space-y-4">
+
+            <div>
+              <label class="block text-sm font-bold mb-1">Título do Quiz *</label>
+              <input
+                type="text"
+                id="quizTituloEditar"
+                value="${esc(quiz.nome)}"
+                required
+                class="w-full p-2 border rounded"
+              >
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold mb-1">Status *</label>
+              <select id="quizStatusEditar" class="w-full p-2 border rounded">
+                <option value="preparando" ${quiz.status === 'preparando' ? 'selected' : ''}>Preparando</option>
+                <option value="ativo" ${quiz.status === 'ativo' ? 'selected' : ''}>Ativo</option>
+                <option value="finalizado" ${quiz.status === 'finalizado' ? 'selected' : ''}>Finalizado</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="flex gap-2 mt-6">
+            <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              💾 Salvar
+            </button>
+            <button type="button" onclick="fecharModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+              Cancelar
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  `;
+
+  document.getElementById('modalContainer').innerHTML = modal;
+}
+
+async function salvarEdicaoQuiz(event, id) {
+  event.preventDefault();
+
+  const nome = document.getElementById('quizTituloEditar').value.trim();
+  const status = document.getElementById('quizStatusEditar').value;
+
+  const { error } = await supabase
+    .from('cnv_quizzes')
+    .update({ nome, status })
+    .eq('id', id);
+
+  if (error) {
+    console.error(error);
+    alert('❌ Erro ao salvar edição do quiz.');
+    return;
+  }
+
+  alert('✅ Quiz atualizado com sucesso!');
+  fecharModal();
+  carregarQuizzes(); // Atualiza a lista
+}
+
 
 // ============================================
 // QUIZ: GERENCIAR PERGUNTAS
