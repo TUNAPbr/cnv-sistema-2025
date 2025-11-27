@@ -1,9 +1,3 @@
-// ============================================
-// MODERADOR-CADASTROS.JS
-// Funções de CRUD para Palestras, Enquetes e Quiz
-// ============================================
-
-// COLE ESTE CÓDIGO NO FINAL DO moderador.js
 
 // ============================================
 // CADASTRO: PALESTRAS
