@@ -109,22 +109,33 @@ function selecionarPalestraParaPerguntas() {
 
 async function ativarPalestraPerguntas(palestraId) {
   try {
-    const { error } = await supabase
-      .from('cnv_sessao')
+    // Atualiza no Supabase e retorna linha atualizada
+    const { data, error } = await supabase
+      .from("cnv_sessao")
       .update({
         palestra_ativa_id: palestraId,
         perguntas_abertas: false
       })
-      .eq('id', 1);
-    
+      .eq("id", 1)
+      .select()
+      .single();
+
     if (error) throw error;
-    
+
+    // Atualiza sessão local imediatamente
+    sessaoAtual = data;
+
+    // Recarrega palestras para puxar nome, palestrante etc.
+    await carregarPalestras();
+
+    // Atualiza a UI da aba Controle (sem depender do realtime)
+    await carregarControlePerguntas();
+
     fecharModal();
-    alert('✅ Palestra selecionada!');
-    
+
   } catch (error) {
-    console.error('Erro ao ativar palestra:', error);
-    alert('❌ Erro ao selecionar palestra');
+    console.error("Erro ao ativar palestra:", error);
+    alert("❌ Erro ao selecionar palestra");
   }
 }
 
