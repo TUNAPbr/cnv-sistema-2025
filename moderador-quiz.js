@@ -701,7 +701,32 @@ function editarPerguntaQuiz(id) {
   `;
   
   const container = document.getElementById('modalContainer');
-  container.innerHTML += modalPergunta;
+  container.innerHTML = modalPergunta;
+}
+async function deletarPerguntaQuiz(id) {
+  if (!confirm('Excluir esta pergunta?')) return;
+  
+  try {
+    const { error } = await supabase
+      .from('cnv_quiz_perguntas')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    await supabase
+      .from('cnv_quizzes')
+      .update({ total_perguntas: Math.max(0, perguntasQuiz.length - 1) })
+      .eq('id', quizAtual.id);
+    
+    alert('✅ Pergunta excluída!');
+    await carregarQuizAtivo();
+    abrirModalGerenciarQuiz(quizAtual);
+    
+  } catch (error) {
+    console.error('Erro ao deletar pergunta:', error);
+    alert('❌ Erro ao deletar pergunta');
+  }
 }
 
 function fecharModalPergunta(event) {
