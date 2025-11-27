@@ -155,7 +155,10 @@ function renderizarListaEnquetes() {
   }
   
   lista.innerHTML = enquetes.map(e => {
-    const opcoes = JSON.parse(e.opcoes);
+   const opcoes = Array.isArray(e.opcoes)
+    ? e.opcoes
+    : JSON.parse(e.opcoes || '[]');
+    
     return `
       <div class="p-4 border rounded hover:shadow-md transition">
         <div class="flex justify-between items-start">
@@ -179,7 +182,9 @@ function renderizarListaEnquetes() {
 
 function abrirModalEnquete(id = null) {
   const enquete = id ? enquetes.find(e => e.id === id) : null;
-  const opcoes = enquete ? JSON.parse(enquete.opcoes) : ['', ''];
+  const opcoes = enquete
+    ? (Array.isArray(enquete.opcoes) ? enquete.opcoes : JSON.parse(enquete.opcoes || '[]'))
+    : ['', ''];
   const titulo = enquete ? 'Editar Enquete' : 'Nova Enquete';
   
   const modal = `
@@ -263,45 +268,47 @@ async function salvarEnquete(event, id) {
   
   const nome = document.getElementById('enqueteNome').value.trim();
   const opcoesInputs = document.querySelectorAll('#enqueteOpcoes input');
-  const opcoes = Array.from(opcoesInputs).map(input => input.value.trim()).filter(o => o);
-  
+  const opcoes = Array.from(opcoesInputs)
+    .map(input => input.value.trim())
+    .filter(o => o);
+
   if (opcoes.length < 2) {
     alert('Informe pelo menos 2 opções');
     return;
   }
-  
-  // Verificar opções vazias
+
   if (opcoes.some(o => !o)) {
     alert('Todas as opções devem ser preenchidas');
     return;
   }
-  
+
   const dados = {
     nome,
-    opcoes: JSON.stringify(opcoes)
+    // IMPORTANTE: mandar o array direto
+    opcoes
   };
-  
+
   try {
     if (id) {
       const { error } = await supabase
         .from('cnv_enquetes')
         .update(dados)
         .eq('id', id);
-      
+
       if (error) throw error;
       alert('✅ Enquete atualizada!');
     } else {
       const { error } = await supabase
         .from('cnv_enquetes')
         .insert(dados);
-      
+
       if (error) throw error;
       alert('✅ Enquete criada!');
     }
-    
+
     fecharModal();
     await carregarEnquetes();
-    
+
   } catch (error) {
     console.error('Erro ao salvar enquete:', error);
     alert('❌ Erro ao salvar enquete');
