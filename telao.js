@@ -7,8 +7,8 @@
 // CONFIGURAÇÃO SUPABASE
 // ============================================
 
-const SUPABASE_URL = 'SUA_URL_AQUI';
-const SUPABASE_ANON_KEY = 'SUA_CHAVE_AQUI';
+const SUPABASE_URL = 'https://qsztainariaiznbblrap.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzenRhaW5hcmlhaXpuYmJscmFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MDQ1MDUsImV4cCI6MjA3OTQ4MDUwNX0.y9RYzXjnPaNo6Mbi_76W_MFBXHjpXmj-rvkvLYkIP4k';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
