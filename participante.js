@@ -73,6 +73,18 @@ async function carregarConfig() {
   }
 }
 
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden) {
+    console.log('👀 Tela do participante voltou a ficar visível, ressincronizando...');
+    try {
+      await carregarSessao();
+      await renderizar();
+    } catch (e) {
+      console.error('Erro ao ressincronizar ao voltar para a tela:', e);
+    }
+  }
+});
+
 async function carregarSessao() {
   const { data } = await supabase
     .from('cnv_sessao')
@@ -101,9 +113,23 @@ async function conectarRealtime() {
       filter: 'id=eq.1'
     }, async (payload) => {
       console.log('🔔 Sessão atualizada:', payload.new);
-      sessao = payload.new;
+      const novaSessao = payload.new;
+    
+      // 🔥 Detecta comando global de refresh
+      const tokenAntigo = sessao?.metadata?.refresh_token;
+      const tokenNovo  = novaSessao?.metadata?.refresh_token;
+    
+      if (tokenNovo && tokenNovo !== tokenAntigo) {
+        console.log('🔁 Comando global de refresh detectado, recarregando página...');
+        location.reload();
+        return;
+      }
+    
+      // Comportamento normal
+      sessao = novaSessao;
       await renderizar();
     })
+
     .on('postgres_changes', {
       event: 'UPDATE',
       schema: 'public',
