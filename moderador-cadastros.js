@@ -1,3 +1,40 @@
+// ============================================
+// UTILITÁRIO: NORMALIZAR OPÇÕES DE ENQUETE
+// ============================================
+
+function normalizarOpcoesEnquete(raw) {
+  if (Array.isArray(raw)) return raw;
+
+  if (raw === null || raw === undefined) return [];
+
+  // Se for objeto JSON (caso raro)
+  if (typeof raw === 'object') {
+    try {
+      return Array.isArray(raw) ? raw : Object.values(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  // Se for string
+  if (typeof raw === 'string') {
+    const s = raw.trim();
+    if (!s) return [];
+
+    // 1) Tenta interpretar como JSON (ex: '["Top","Muito bom"]')
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // ignora erro, cai pro split
+    }
+
+    // 2) fallback: string simples separada por vírgula
+    return s.split(',').map(o => o.trim()).filter(Boolean);
+  }
+
+  return [];
+}
 
 // ============================================
 // CADASTRO: PALESTRAS
@@ -155,9 +192,7 @@ function renderizarListaEnquetes() {
   }
   
   lista.innerHTML = enquetes.map(e => {
-   const opcoes = Array.isArray(e.opcoes)
-    ? e.opcoes
-    : JSON.parse(e.opcoes || '[]');
+   const opcoes = normalizarOpcoesEnquete(e.opcoes);
     
     return `
       <div class="p-4 border rounded hover:shadow-md transition">
@@ -182,9 +217,7 @@ function renderizarListaEnquetes() {
 
 function abrirModalEnquete(id = null) {
   const enquete = id ? enquetes.find(e => e.id === id) : null;
-  const opcoes = enquete
-    ? (Array.isArray(enquete.opcoes) ? enquete.opcoes : JSON.parse(enquete.opcoes || '[]'))
-    : ['', ''];
+  const opcoes = enquete ? normalizarOpcoesEnquete(enquete.opcoes) : ['', ''];
   const titulo = enquete ? 'Editar Enquete' : 'Nova Enquete';
   
   const modal = `
