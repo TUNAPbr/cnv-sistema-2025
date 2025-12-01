@@ -1,5 +1,5 @@
 // ============================================
-// TELAO.JS
+// TELAO.JS - TEMA MAR DE OPORTUNIDADES
 // Tela de Projeção (Read-Only)
 // ============================================
 
@@ -54,8 +54,8 @@ async function carregarConfig() {
   config = data;
   
   if (config) {
-    document.documentElement.style.setProperty('--cor-primaria', config.cor_primaria);
-    document.documentElement.style.setProperty('--cor-secundaria', config.cor_secundaria);
+    document.documentElement.style.setProperty('--cnv-primary', config.cor_primaria || '#2797ff');
+    document.documentElement.style.setProperty('--cnv-secondary', config.cor_secundaria || '#0b67bc');
   }
 }
 
@@ -141,9 +141,12 @@ function renderizarAguardando() {
   const container = document.getElementById('telaoContainer');
   
   container.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-full">
-      <h1 class="text-8xl font-bold mb-8">${esc(config?.nome_evento || 'CNV 2025')}</h1>
-      <p class="text-4xl text-gray-200">Aguardando próxima atividade...</p>
+    <div class="flex flex-col items-center justify-center h-full breathe">
+      <h1 class="text-8xl font-bold mb-8 ocean-text">${esc(config?.nome_evento || 'CNV 2025')}</h1>
+      <div class="glow-tertiary text-5xl font-bold mb-4">
+        🌊 Mar de Oportunidades
+      </div>
+      <p class="text-4xl text-gray-200 ocean-text mt-8">Aguardando próxima atividade...</p>
     </div>
   `;
 }
@@ -167,7 +170,7 @@ async function renderizarPerguntas() {
   }
   
   if (!palestraAtual) {
-    container.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-4xl">Aguardando palestra...</p></div>';
+    container.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-4xl ocean-text">Aguardando palestra...</p></div>';
     return;
   }
   
@@ -184,33 +187,33 @@ async function renderizarPerguntas() {
     // Mostrar pergunta específica
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full">
-        <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-3xl p-12 max-w-4xl w-full">
+        <div class="ocean-card rounded-3xl p-12 max-w-4xl w-full bubble">
           <div class="mb-6">
-            <h2 class="text-3xl font-bold text-yellow-300">${esc(palestraAtual.nome)}</h2>
-            <p class="text-xl text-gray-200">${esc(palestraAtual.palestrante)}</p>
+            <h2 class="text-3xl font-bold glow-tertiary">${esc(palestraAtual.nome)}</h2>
+            <p class="text-xl text-gray-200 ocean-text">${esc(palestraAtual.palestrante)}</p>
           </div>
           <div class="mb-4">
-            <p class="text-2xl text-gray-300 mb-2">${pergunta.nome_autor || 'Participante'} pergunta:</p>
+            <p class="text-2xl text-gray-300 mb-2 ocean-text">💬 ${pergunta.nome_autor || 'Participante'} pergunta:</p>
           </div>
-          <p class="text-5xl font-bold leading-relaxed">${esc(pergunta.pergunta)}</p>
+          <p class="text-5xl font-bold leading-relaxed ocean-text">${esc(pergunta.pergunta)}</p>
         </div>
       </div>
     `;
   } else {
     // Status geral
     const statusTexto = sessao.perguntas_abertas ? 
-      '🟢 Perguntas ABERTAS' : 
-      '🔴 Perguntas FECHADAS';
+      '<span class="text-green-400">🟢 Perguntas ABERTAS</span>' : 
+      '<span class="text-red-400">🔴 Perguntas FECHADAS</span>';
     
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full">
         <div class="text-center">
-          <h1 class="text-6xl font-bold mb-4">${esc(palestraAtual.nome)}</h1>
-          <p class="text-4xl text-gray-200 mb-8">Palestrante: ${esc(palestraAtual.palestrante)}</p>
+          <h1 class="text-6xl font-bold mb-4 ocean-text">${esc(palestraAtual.nome)}</h1>
+          <p class="text-4xl text-gray-200 mb-8 ocean-text">Palestrante: ${esc(palestraAtual.palestrante)}</p>
           <div class="text-5xl font-bold mb-8">${statusTexto}</div>
           ${sessao.perguntas_abertas ? 
-            '<p class="text-3xl text-yellow-300">📱 Envie sua pergunta pelo celular!</p>' : 
-            '<p class="text-3xl text-gray-300">Perguntas encerradas</p>'
+            '<p class="text-3xl glow-tertiary animate-pulse">📱 Envie sua pergunta pelo celular!</p>' : 
+            '<p class="text-3xl text-gray-300 ocean-text">Perguntas encerradas</p>'
           }
         </div>
       </div>
@@ -237,7 +240,7 @@ async function renderizarEnquetes() {
   }
   
   if (!enqueteAtual) {
-    container.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-4xl">Aguardando enquete...</p></div>';
+    container.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-4xl ocean-text">Aguardando enquete...</p></div>';
     return;
   }
   
@@ -252,49 +255,59 @@ async function renderizarEnquetes() {
     const totalVotos = (resultado || []).reduce((sum, r) => sum + parseInt(r.total_votos), 0);
     
     container.innerHTML = `
-      <div class="flex flex-col items-center justify-center h-full">
-        <div class="w-full max-w-5xl">
-          <h1 class="text-6xl font-bold mb-8 text-center">${esc(enqueteAtual.nome)}</h1>
-          <p class="text-3xl text-center mb-12 text-gray-200">📊 Resultado (${totalVotos} votos)</p>
-          <div class="space-y-4">
-            ${opcoes.map((opcao, idx) => {
-              const res = (resultado || []).find(r => r.opcao_index === idx);
-              const votos = res ? parseInt(res.total_votos) : 0;
-              const percentual = res ? parseFloat(res.percentual) : 0;
-              
-              return `
-                <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl p-6">
-                  <div class="flex justify-between items-center mb-3">
-                    <span class="text-3xl font-bold">${idx + 1}. ${esc(opcao)}</span>
-                    <span class="text-3xl font-bold text-yellow-300">${percentual}%</span>
-                  </div>
-                  <div class="w-full bg-white bg-opacity-30 rounded-full h-8">
-                    <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-8 rounded-full flex items-center justify-end pr-4" 
-                         style="width: ${percentual}%">
-                      <span class="text-white font-bold">${votos} votos</span>
-                    </div>
+      <div class="flex flex-col h-full justify-center">
+        <h2 class="text-6xl font-bold text-center mb-12 ocean-text">${esc(enqueteAtual.nome)}</h2>
+        
+        <div class="space-y-6 px-12">
+          ${(resultado || []).map((r, index) => {
+            const percentual = r.percentual || 0;
+            const cores = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
+            const corBarra = cores[index % cores.length];
+            
+            return `
+              <div class="ocean-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="text-3xl font-bold ocean-text">${esc(r.texto)}</p>
+                  <div class="text-right">
+                    <p class="text-4xl font-bold glow-tertiary">${percentual}%</p>
+                    <p class="text-xl text-gray-300">${r.total_votos} votos</p>
                   </div>
                 </div>
-              `;
-            }).join('')}
-          </div>
+                <div class="w-full bg-white bg-opacity-20 rounded-full h-6 overflow-hidden">
+                  <div class="${corBarra} h-6 rounded-full shimmer transition-all duration-1000" style="width: ${percentual}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
+        
+        <p class="text-center text-3xl mt-8 text-gray-300 ocean-text">Total de votos: ${totalVotos}</p>
       </div>
     `;
   } else {
-    // Status geral
-    const statusTexto = sessao.enquete_votacao_aberta ? 
-      '🟢 Votação ABERTA' : 
-      '🔴 Votação FECHADA';
+    // Votação aberta
+    const statusVotacao = sessao.enquete_votacao_aberta ?
+      '<span class="text-green-400">🟢 VOTAÇÃO ABERTA</span>' :
+      '<span class="text-red-400">🔴 VOTAÇÃO FECHADA</span>';
     
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full">
-        <div class="text-center">
-          <h1 class="text-6xl font-bold mb-12">${esc(enqueteAtual.nome)}</h1>
-          <div class="text-5xl font-bold mb-8">${statusTexto}</div>
+        <div class="text-center max-w-5xl">
+          <h2 class="text-7xl font-bold mb-8 ocean-text">${esc(enqueteAtual.nome)}</h2>
+          
+          <div class="text-6xl font-bold mb-12">${statusVotacao}</div>
+          
+          <div class="grid grid-cols-1 gap-4 mb-8">
+            ${opcoes.map((opcao, index) => `
+              <div class="ocean-card rounded-2xl p-6 bubble" style="animation-delay: ${index * 0.1}s">
+                <p class="text-4xl font-bold ocean-text">${String.fromCharCode(65 + index)}) ${esc(opcao)}</p>
+              </div>
+            `).join('')}
+          </div>
+          
           ${sessao.enquete_votacao_aberta ? 
-            '<p class="text-3xl text-yellow-300">📱 Vote pelo seu celular!</p>' : 
-            '<p class="text-3xl text-gray-300">Votação encerrada. Aguardando resultado...</p>'
+            '<p class="text-4xl glow-tertiary animate-pulse">📱 Vote pelo seu celular!</p>' : 
+            '<p class="text-4xl text-gray-300 ocean-text">Aguardando resultado...</p>'
           }
         </div>
       </div>
@@ -307,9 +320,6 @@ async function renderizarEnquetes() {
 // ============================================
 
 async function renderizarQuiz() {
-  const container = document.getElementById('telaoContainer');
-  
-  // Carregar quiz
   if (sessao.quiz_ativo_id && (!quizAtual || quizAtual.id !== sessao.quiz_ativo_id)) {
     const { data } = await supabase
       .from('cnv_quizzes')
@@ -321,60 +331,55 @@ async function renderizarQuiz() {
   }
   
   if (!quizAtual) {
-    container.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-4xl">Aguardando quiz...</p></div>';
+    const container = document.getElementById('telaoContainer');
+    container.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-4xl ocean-text">Aguardando quiz...</p></div>';
     return;
   }
   
   const estado = sessao.quiz_estado;
   
-  // Decisão baseada no estado do quiz
-  if (estado === 'cadastro_nomes') {
-    await renderizarQuizCadastroNomes();
-  } else if (estado === 'aguardando_inicio') {
+  if (estado === 'cadastro') {
+    renderizarQuizCadastro();
+  } else if (estado === 'aguardando') {
     renderizarQuizAguardando();
-  } else if (estado === 'countdown_3s') {
+  } else if (estado === 'countdown3s') {
     renderizarQuizCountdown3s();
-  } else if (estado === 'jogando_pergunta') {
+  } else if (estado === 'pergunta') {
     await renderizarQuizPergunta();
   } else if (estado === 'tempo_esgotado') {
     renderizarQuizTempoEsgotado();
-  } else if (estado === 'resposta_revelada') {
+  } else if (estado === 'resultado_pergunta') {
     await renderizarQuizResultado();
   } else if (estado === 'ranking') {
     await renderizarQuizRanking();
-  } else {
-    renderizarQuizAguardando();
   }
 }
 
-async function renderizarQuizCadastroNomes() {
+async function renderizarQuizCadastro() {
   const container = document.getElementById('telaoContainer');
   
-  // Carregar participantes
   const { data: participantes } = await supabase
     .from('cnv_quiz_participantes')
-    .select('nome, cadastrado_em')
+    .select('nome')
     .eq('quiz_id', quizAtual.id)
-    .order('cadastrado_em', { ascending: false })
-    .limit(20);
+    .order('cadastrado_em', { ascending: false });
   
   container.innerHTML = `
     <div class="flex flex-col items-center justify-center h-full">
-      <h1 class="text-7xl font-bold mb-8">🎮 ${esc(quizAtual.nome)}</h1>
-      <p class="text-4xl mb-8 text-yellow-300">📝 Cadastro de Participantes Aberto!</p>
-      <p class="text-3xl mb-12 text-gray-200">${(participantes || []).length} participantes cadastrados</p>
+      <h1 class="text-8xl font-bold mb-8 ocean-text breathe">🎮 ${esc(quizAtual.nome)}</h1>
+      <p class="text-5xl glow-tertiary mb-12">Cadastro de Participantes</p>
       
       ${(participantes || []).length > 0 ? `
         <div class="grid grid-cols-4 gap-4 max-w-6xl">
           ${participantes.slice(0, 16).map(p => `
-            <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-xl p-4 text-center">
-              <p class="text-2xl font-bold">👤 ${esc(p.nome)}</p>
+            <div class="ocean-card rounded-xl p-4 text-center bubble">
+              <p class="text-2xl font-bold ocean-text">👤 ${esc(p.nome)}</p>
             </div>
           `).join('')}
         </div>
       ` : ''}
       
-      <p class="text-3xl mt-12 text-yellow-300">📱 Cadastre-se pelo seu celular!</p>
+      <p class="text-3xl mt-12 glow-tertiary animate-pulse">📱 Cadastre-se pelo seu celular!</p>
     </div>
   `;
 }
@@ -383,10 +388,10 @@ function renderizarQuizAguardando() {
   const container = document.getElementById('telaoContainer');
   
   container.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-full">
-      <h1 class="text-7xl font-bold mb-8">🎮 ${esc(quizAtual.nome)}</h1>
-      <p class="text-5xl text-yellow-300">O quiz vai começar!</p>
-      <p class="text-3xl mt-8 text-gray-200">⏳ Aguardando primeira pergunta...</p>
+    <div class="flex flex-col items-center justify-center h-full breathe">
+      <h1 class="text-7xl font-bold mb-8 ocean-text">🎮 ${esc(quizAtual.nome)}</h1>
+      <p class="text-5xl glow-tertiary">O quiz vai começar!</p>
+      <p class="text-3xl mt-8 text-gray-200 ocean-text">⏳ Aguardando primeira pergunta...</p>
     </div>
   `;
 }
@@ -400,8 +405,8 @@ function renderizarQuizCountdown3s() {
     container.innerHTML = `
       <div class="flex items-center justify-center h-full">
         <div class="countdown-display text-center">
-          <div class="text-[20rem] font-bold leading-none">${contador}</div>
-          <p class="text-6xl mt-8">segundos</p>
+          <div class="text-[20rem] font-bold leading-none glow-tertiary">${contador}</div>
+          <p class="text-6xl mt-8 ocean-text">segundos</p>
         </div>
       </div>
     `;
@@ -438,27 +443,27 @@ async function renderizarQuizPergunta() {
   container.innerHTML = `
     <div class="flex flex-col h-full">
       <div class="text-center mb-8">
-        <h2 class="text-4xl font-bold text-yellow-300">Pergunta ${perguntaQuizAtual.ordem}</h2>
-        <div id="tempoRestante" class="text-6xl font-bold mt-4">${tempoLimite}s</div>
+        <h2 class="text-4xl font-bold glow-tertiary">Pergunta ${perguntaQuizAtual.ordem}</h2>
+        <div id="tempoRestante" class="text-6xl font-bold mt-4 ocean-text">${tempoLimite}s</div>
       </div>
       
       <div class="flex-1 flex flex-col items-center justify-center">
-        <div class="bg-white bg-opacity-20 backdrop-blur-lg rounded-3xl p-12 max-w-5xl w-full mb-8">
-          <p class="text-5xl font-bold text-center leading-relaxed">${esc(perguntaQuizAtual.pergunta)}</p>
+        <div class="ocean-card rounded-3xl p-12 max-w-5xl w-full mb-8">
+          <p class="text-5xl font-bold text-center leading-relaxed ocean-text">${esc(perguntaQuizAtual.pergunta)}</p>
         </div>
         
         <div class="grid grid-cols-2 gap-6 max-w-5xl w-full">
-          <div class="bg-blue-500 bg-opacity-30 rounded-2xl p-6">
-            <p class="text-4xl font-bold">A) ${esc(perguntaQuizAtual.opcao_a)}</p>
+          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #3b82f6;">
+            <p class="text-4xl font-bold ocean-text">A) ${esc(perguntaQuizAtual.opcao_a)}</p>
           </div>
-          <div class="bg-green-500 bg-opacity-30 rounded-2xl p-6">
-            <p class="text-4xl font-bold">B) ${esc(perguntaQuizAtual.opcao_b)}</p>
+          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #10b981;">
+            <p class="text-4xl font-bold ocean-text">B) ${esc(perguntaQuizAtual.opcao_b)}</p>
           </div>
-          <div class="bg-orange-500 bg-opacity-30 rounded-2xl p-6">
-            <p class="text-4xl font-bold">C) ${esc(perguntaQuizAtual.opcao_c)}</p>
+          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #f59e0b;">
+            <p class="text-4xl font-bold ocean-text">C) ${esc(perguntaQuizAtual.opcao_c)}</p>
           </div>
-          <div class="bg-purple-500 bg-opacity-30 rounded-2xl p-6">
-            <p class="text-4xl font-bold">D) ${esc(perguntaQuizAtual.opcao_d)}</p>
+          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #a855f7;">
+            <p class="text-4xl font-bold ocean-text">D) ${esc(perguntaQuizAtual.opcao_d)}</p>
           </div>
         </div>
       </div>
@@ -473,6 +478,7 @@ async function renderizarQuizPergunta() {
     if (el) {
       el.textContent = `${tempo}s`;
       if (tempo <= 5) {
+        el.classList.remove('ocean-text');
         el.classList.add('text-red-500', 'countdown-display');
       }
     }
@@ -522,10 +528,10 @@ async function renderizarQuizResultado() {
   container.innerHTML = `
     <div class="flex flex-col h-full">
       <div class="text-center mb-8">
-        <div class="bg-green-500 bg-opacity-30 rounded-3xl p-6 inline-block mb-4">
-          <p class="text-5xl font-bold">✓ RESPOSTA CORRETA: ${correta}</p>
+        <div class="ocean-card rounded-3xl p-6 inline-block mb-4" style="border: 3px solid #10b981;">
+          <p class="text-5xl font-bold glow-tertiary">✓ RESPOSTA CORRETA: ${correta}</p>
         </div>
-        <p class="text-4xl">${percentualAcerto}% acertaram</p>
+        <p class="text-4xl ocean-text">${percentualAcerto}% acertaram</p>
         <p class="text-2xl text-gray-300">${totalRespostas} respostas</p>
       </div>
       
@@ -535,16 +541,16 @@ async function renderizarQuizResultado() {
           const dados = distribuicao[letra] || { votos: 0, percentual: 0 };
           
           return `
-            <div class="rounded-2xl p-6 ${isCorreta ? 'bg-green-500 bg-opacity-50 ring-4 ring-yellow-400' : 'bg-white bg-opacity-20'}">
+            <div class="ocean-card rounded-2xl p-6 ${isCorreta ? 'ring-4 ring-yellow-400' : ''}">
               <div class="text-center mb-4">
-                <p class="text-4xl font-bold">${letra}</p>
-                ${isCorreta ? '<p class="text-4xl">✓</p>' : ''}
+                <p class="text-4xl font-bold ocean-text">${letra}</p>
+                ${isCorreta ? '<p class="text-4xl glow-tertiary">✓</p>' : ''}
               </div>
-              <p class="text-2xl font-bold text-center">${dados.votos} votos</p>
-              <div class="w-full bg-white bg-opacity-30 rounded-full h-4 mt-3">
-                <div class="bg-white h-4 rounded-full" style="width: ${dados.percentual || 0}%"></div>
+              <p class="text-2xl font-bold text-center ocean-text">${dados.votos} votos</p>
+              <div class="w-full bg-white bg-opacity-30 rounded-full h-4 mt-3 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-4 rounded-full shimmer transition-all duration-1000" style="width: ${dados.percentual || 0}%"></div>
               </div>
-              <p class="text-xl text-center mt-2">${dados.percentual || 0}%</p>
+              <p class="text-xl text-center mt-2 ocean-text">${dados.percentual || 0}%</p>
             </div>
           `;
         }).join('')}
@@ -564,23 +570,21 @@ async function renderizarQuizRanking() {
   
   container.innerHTML = `
     <div class="flex flex-col h-full">
-      <h1 class="text-8xl font-bold text-center mb-12">🏆 RANKING</h1>
+      <h1 class="text-8xl font-bold text-center mb-12 ocean-text breathe">🏆 RANKING</h1>
       
       <div class="space-y-4 px-12">
         ${top10.map(r => {
           const medal = r.posicao === 1 ? '🥇' : r.posicao === 2 ? '🥈' : r.posicao === 3 ? '🥉' : `${r.posicao}º`;
-          const bgColor = r.posicao === 1 ? 'bg-yellow-500' : 
-                          r.posicao === 2 ? 'bg-gray-400' : 
-                          r.posicao === 3 ? 'bg-orange-600' : 'bg-white';
+          const isTop3 = r.posicao <= 3;
           
           return `
-            <div class="${bgColor} bg-opacity-30 backdrop-blur-lg rounded-2xl p-6 flex items-center justify-between">
+            <div class="ocean-card rounded-2xl p-6 flex items-center justify-between bubble ${isTop3 ? 'ring-2 ring-yellow-400' : ''}" style="animation-delay: ${r.posicao * 0.1}s">
               <div class="flex items-center gap-6">
                 <span class="text-6xl font-bold">${medal}</span>
-                <span class="text-5xl font-bold">${esc(r.nome)}</span>
+                <span class="text-5xl font-bold ocean-text">${esc(r.nome)}</span>
               </div>
               <div class="text-right">
-                <p class="text-5xl font-bold text-yellow-300">${r.pontos_totais} pts</p>
+                <p class="text-5xl font-bold glow-tertiary shimmer">${r.pontos_totais} pts</p>
                 <p class="text-2xl text-gray-200">${r.total_acertos} acertos</p>
               </div>
             </div>
@@ -608,7 +612,7 @@ function mostrarErro(mensagem) {
     <div class="flex items-center justify-center h-full">
       <div class="text-center">
         <p class="text-6xl mb-4">❌</p>
-        <p class="text-4xl">${esc(mensagem)}</p>
+        <p class="text-4xl ocean-text">${esc(mensagem)}</p>
       </div>
     </div>
   `;
