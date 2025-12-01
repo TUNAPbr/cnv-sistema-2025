@@ -414,7 +414,7 @@ async function carregarControleEnquetes() {
   }
   
   const enquete = enquetes.find(e => e.id === sessaoAtual.enquete_ativa_id);
-  const opcoes = enquete ? JSON.parse(enquete.opcoes) : [];
+  const opcoes = enquete ? normalizarOpcoesEnquete(enquete.opcoes) : [];
   
   container.innerHTML = `
     <div class="p-4 bg-blue-50 border border-blue-200 rounded">
@@ -571,7 +571,7 @@ async function carregarResultadoEnquete() {
   }
   
   const enquete = enquetes.find(e => e.id === sessaoAtual.enquete_ativa_id);
-  const opcoes = enquete ? JSON.parse(enquete.opcoes) : [];
+  const opcoes = enquete ? normalizarOpcoesEnquete(enquete.opcoes) : [];
   
   const totalVotos = data.reduce((sum, r) => sum + parseInt(r.total_votos), 0);
   
