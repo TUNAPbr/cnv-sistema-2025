@@ -244,7 +244,15 @@ async function renderizarEnquetes() {
     return;
   }
   
-  const opcoes = JSON.parse(enqueteAtual.opcoes);
+  let opcoes;
+  try {
+    opcoes = typeof enqueteAtual.opcoes === 'string' 
+      ? JSON.parse(enqueteAtual.opcoes) 
+      : enqueteAtual.opcoes;
+  } catch (e) {
+    console.error('Erro ao parsear opções da enquete:', e);
+    opcoes = [];
+  }
   
   // Se deve mostrar resultado
   if (sessao.enquete_mostrar_resultado) {
