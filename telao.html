@@ -23,11 +23,11 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: linear-gradient(180deg, 
-        #1e90ff 0%, 
-        var(--cnv-primary) 30%,
-        var(--cnv-secondary) 70%, 
-        #052e4f 100%
+      background: linear-gradient(180deg,
+        #0a3d62 0%, 
+        #0b4f84 40%,
+        #0865b0 70%,
+        #053864 100%
       );
       position: relative;
     }
@@ -201,16 +201,16 @@
 
     /* Card oceânico */
     .ocean-card {
-      background: linear-gradient(135deg, 
-        rgba(11, 103, 188, 0.85) 0%, 
-        rgba(5, 46, 79, 0.9) 100%
-      );
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      background: #ebeef2 !important;
+      color: #161c24 !important;
+      border-radius: 24px;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.4);
+      padding: 2rem;
     }
+
 
     /* Texto com sombra para legibilidade */
     .ocean-text {
@@ -220,12 +220,11 @@
     }
 
     /* Glow effect para destaques */
-    .glow-tertiary {
-      color: #d4e157;
-      text-shadow: 
-        0 0 10px rgba(212, 225, 87, 0.6),
-        0 0 20px rgba(212, 225, 87, 0.4),
-        0 2px 8px rgba(0, 0, 0, 0.5);
+    .glow-soft {
+      color: white;
+      text-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.35);
     }
 
     /* Bolhas animadas (modo perguntas) */
