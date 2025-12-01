@@ -156,8 +156,6 @@ async function abrirPerguntasParticipantes() {
     // 🔥 Atualiza UI do módulo de perguntas
     await carregarControlePerguntas();
 
-    alert('✅ Perguntas abertas para participantes!');
-
   } catch (error) {
     console.error('Erro ao abrir perguntas:', error);
     alert('❌ Erro ao abrir perguntas');
@@ -180,8 +178,6 @@ async function fecharPerguntasParticipantes() {
 
     // 🔥 Atualiza UI do módulo de perguntas
     await carregarControlePerguntas();
-
-    alert('✅ Perguntas fechadas!');
 
   } catch (error) {
     console.error('Erro ao fechar perguntas:', error);
