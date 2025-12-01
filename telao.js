@@ -203,7 +203,7 @@ async function renderizarPerguntas() {
     // Status geral
     const statusTexto = sessao.perguntas_abertas ? 
       '<span class="text-green-400">🟢 Perguntas ABERTAS</span>' : 
-      '<span class="text-red-400">🔴 Perguntas FECHADAS</span>';
+      '<span class="text-gray-400">🔴 Perguntas FECHADAS</span>';
     
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full">
@@ -261,7 +261,7 @@ async function renderizarEnquetes() {
         <div class="space-y-6 px-12">
           ${(resultado || []).map((r, index) => {
             const percentual = r.percentual || 0;
-            const cores = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
+            const cores = ['bg-blue-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-sky-500', 'bg-blue-600'];
             const corBarra = cores[index % cores.length];
             
             return `
@@ -288,7 +288,7 @@ async function renderizarEnquetes() {
     // Votação aberta
     const statusVotacao = sessao.enquete_votacao_aberta ?
       '<span class="text-green-400">🟢 VOTAÇÃO ABERTA</span>' :
-      '<span class="text-red-400">🔴 VOTAÇÃO FECHADA</span>';
+      '<span class="text-gray-400">🔴 VOTAÇÃO FECHADA</span>';
     
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full">
@@ -459,10 +459,10 @@ async function renderizarQuizPergunta() {
           <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #10b981;">
             <p class="text-4xl font-bold ocean-text">B) ${esc(perguntaQuizAtual.opcao_b)}</p>
           </div>
-          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #f59e0b;">
+          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #06b6d4;">
             <p class="text-4xl font-bold ocean-text">C) ${esc(perguntaQuizAtual.opcao_c)}</p>
           </div>
-          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #a855f7;">
+          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #acc420;">
             <p class="text-4xl font-bold ocean-text">D) ${esc(perguntaQuizAtual.opcao_d)}</p>
           </div>
         </div>
@@ -479,7 +479,7 @@ async function renderizarQuizPergunta() {
       el.textContent = `${tempo}s`;
       if (tempo <= 5) {
         el.classList.remove('ocean-text');
-        el.classList.add('text-red-500', 'countdown-display');
+        el.classList.add('text-yellow-400', 'countdown-display');
       }
     }
     if (tempo <= 0) {
@@ -495,8 +495,8 @@ function renderizarQuizTempoEsgotado() {
     <div class="flex items-center justify-center h-full">
       <div class="text-center countdown-display">
         <div class="text-[15rem] leading-none mb-8">⏰</div>
-        <p class="text-8xl font-bold text-red-500">TEMPO</p>
-        <p class="text-8xl font-bold text-red-500">ESGOTADO!</p>
+        <p class="text-8xl font-bold text-yellow-400">TEMPO</p>
+        <p class="text-8xl font-bold text-yellow-400">ESGOTADO!</p>
       </div>
     </div>
   `;
