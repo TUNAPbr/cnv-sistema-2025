@@ -220,7 +220,9 @@ async function carregarPerguntasRecebidas() {
     <h4 class="font-bold mb-2">Perguntas Recebidas (${perguntasRecebidas.length})</h4>
     <div class="space-y-2">
       ${perguntasRecebidas.map(p => `
-        <div class="p-3 border rounded ${p.exibida_no_telao ? 'bg-green-50 border-green-300' : ''}">
+        <div class="p-3 border rounded
+          ${p.exibida_no_telao ? ' bg-green-50 border-green-300' : ''}
+          ${p.respondida ? ' bg-gray-100 opacity-75' : ''}">
           <div class="flex justify-between items-start gap-2">
             <div class="flex-1">
               <p class="font-medium">${esc(p.pergunta)}</p>
@@ -228,20 +230,27 @@ async function carregarPerguntasRecebidas() {
                 ${p.nome_autor ? esc(p.nome_autor) : 'Anônimo'} • 
                 ${new Date(p.criada_em).toLocaleString('pt-BR')}
               </p>
+              ${p.respondida ? '<p class="text-xs font-semibold text-emerald-700 mt-1">✅ Respondida</p>' : ''}
             </div>
-            <div class="flex gap-1">
-              <button onclick="editarPerguntaRecebida('${p.id}')" 
-                class="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">
-                ✏️
-              </button>
-              <button onclick="exibirPerguntaNoTelao('${p.id}')" 
-                class="px-2 py-1 text-xs ${p.exibida_no_telao ? 'bg-gray-400' : 'bg-green-500'} text-white rounded hover:opacity-80">
-                ${p.exibida_no_telao ? '👁️' : '📺'}
-              </button>
-              <button onclick="deletarPerguntaRecebida('${p.id}')" 
-                class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600">
-                🗑️
-              </button>
+            <div class="flex flex-col gap-1 items-end">
+              <div class="flex gap-1">
+                <button onclick="editarPerguntaRecebida('${p.id}')" 
+                  class="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">
+                  ✏️
+                </button>
+                <button onclick="exibirPerguntaNoTelao('${p.id}')" 
+                  class="px-2 py-1 text-xs ${p.exibida_no_telao ? 'bg-gray-400' : 'bg-green-500'} text-white rounded hover:opacity-80">
+                  ${p.exibida_no_telao ? '👁️' : '📺'}
+                </button>
+                <button onclick="togglePerguntaRespondida('${p.id}')"
+                  class="px-2 py-1 text-xs ${p.respondida ? 'bg-emerald-600' : 'bg-emerald-500'} text-white rounded hover:bg-emerald-700">
+                  ${p.respondida ? '↩️ Pendente' : '✅ Respondida'}
+                </button>
+                <button onclick="deletarPerguntaRecebida('${p.id}')" 
+                  class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600">
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -305,25 +314,42 @@ async function salvarEdicaoPergunta(event, id) {
 
 async function exibirPerguntaNoTelao(id) {
   try {
-    // Desmarcar todas as outras
-    await supabase
-      .from('cnv_perguntas')
-      .update({ exibida_no_telao: false })
-      .eq('palestra_id', sessaoAtual.palestra_ativa_id);
-    
-    // Marcar esta como exibida
-    const { error } = await supabase
-      .from('cnv_perguntas')
-      .update({ exibida_no_telao: true })
-      .eq('id', id);
-    
-    if (error) throw error;
-    
+    // Descobre como está o estado atual desta pergunta
+    const pergunta = perguntasRecebidas.find(p => p.id === id);
+    const jaExibida = !!pergunta?.exibida_no_telao;
+
+    if (jaExibida) {
+      // 🔹 Se já está no telão, eu APENAS oculto
+      const { error } = await supabase
+        .from('cnv_perguntas')
+        .update({ exibida_no_telao: false })
+        .eq('id', id);
+
+      if (error) throw error;
+    } else {
+      // 🔹 Se ainda NÃO está no telão, faço o fluxo atual:
+      // limpa todas da palestra e marca só essa
+      const { error: clearError } = await supabase
+        .from('cnv_perguntas')
+        .update({ exibida_no_telao: false })
+        .eq('palestra_id', sessaoAtual.palestra_ativa_id);
+
+      if (clearError) throw clearError;
+
+      const { error } = await supabase
+        .from('cnv_perguntas')
+        .update({ exibida_no_telao: true })
+        .eq('id', id);
+
+      if (error) throw error;
+    }
+
+    // 🔄 Atualiza a lista do moderador
     await carregarPerguntasRecebidas();
-    
+
   } catch (error) {
-    console.error('Erro ao exibir pergunta:', error);
-    alert('❌ Erro ao exibir pergunta');
+    console.error('Erro ao exibir/ocultar pergunta:', error);
+    alert('❌ Erro ao exibir/ocultar pergunta');
   }
 }
 
@@ -343,6 +369,30 @@ async function deletarPerguntaRecebida(id) {
   } catch (error) {
     console.error('Erro ao deletar pergunta:', error);
     alert('❌ Erro ao deletar pergunta');
+  }
+}
+
+async function togglePerguntaRespondida(id) {
+  const pergunta = perguntasRecebidas.find(p => p.id === id);
+  if (!pergunta) return;
+
+  const novaFlag = !pergunta.respondida;
+
+  try {
+    const { error } = await supabase
+      .from('cnv_perguntas')
+      .update({ 
+        respondida: novaFlag,
+        exibida_no_telao: false // sempre tira do telão ao marcar como respondida
+      })
+      .eq('id', id);
+    
+    if (error) throw error;
+
+    await carregarPerguntasRecebidas();
+  } catch (error) {
+    console.error('Erro ao marcar pergunta como respondida:', error);
+    alert('❌ Erro ao marcar pergunta como respondida');
   }
 }
 
