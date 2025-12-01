@@ -238,11 +238,18 @@ async function renderizarPerguntas() {
         </form>
       ` : `
         <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p class="text-red-800 font-bold">⚠️ ${validacao.motivo}</p>
+          <p id="mensagemBloqueioPergunta" class="text-red-800 font-bold">
+            ⚠️ ${validacao.motivo}
+          </p>
         </div>
       `}
     </div>
   `;
+
+  // Se está bloqueado para perguntar, inicia contagem regressiva visual (se houver segundos na mensagem)
+  if (!validacao.pode) {
+    iniciarCountdownBloqueioPergunta(validacao.motivo);
+  }
   
   // Listener para checkbox anônimo
   const checkAnonimo = document.getElementById('checkAnonimo');
@@ -252,6 +259,46 @@ async function renderizarPerguntas() {
       document.getElementById('emailAutor').disabled = e.target.checked;
     });
   }
+}
+
+let intervaloBloqueioPergunta;
+
+function iniciarCountdownBloqueioPergunta(motivoOriginal) {
+  // Limpa contagem anterior, se existir
+  if (intervaloBloqueioPergunta) {
+    clearInterval(intervaloBloqueioPergunta);
+    intervaloBloqueioPergunta = null;
+  }
+
+  // Tenta achar um número de segundos na mensagem (ex: "28 segundos")
+  const match = motivoOriginal.match(/(\d+)\s*segundo/);
+  if (!match) return; // se não tiver número, não faz nada
+
+  let tempo = parseInt(match[1], 10);
+  const el = document.getElementById('mensagemBloqueioPergunta');
+  if (!el) return;
+
+  const atualizar = () => {
+    if (tempo <= 0) {
+      clearInterval(intervaloBloqueioPergunta);
+      intervaloBloqueioPergunta = null;
+      // Quando zerar, re-renderiza a tela pra consultar de novo o backend
+      renderizar();
+      return;
+    }
+
+    const texto = motivoOriginal.replace(
+      /(\d+)\s*segundo/,
+      `${tempo} segundo${tempo === 1 ? '' : 's'}`
+    );
+
+    el.textContent = `⚠️ ${texto}`;
+    tempo--;
+  };
+
+  // Atualiza imediatamente e depois a cada 1s
+  atualizar();
+  intervaloBloqueioPergunta = setInterval(atualizar, 1000);
 }
 
 async function verificarPodePerguntar() {
