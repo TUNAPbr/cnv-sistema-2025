@@ -430,11 +430,17 @@ async function carregarControleEnquetes() {
             🔓 Abrir Votação
           </button>
         `}
+        
         <button onclick="toggleResultadoEnquete()" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
           ${sessaoAtual.enquete_mostrar_resultado ? '🙈 Ocultar' : '📊 Mostrar'} Resultado
         </button>
+
         <button onclick="selecionarEnquete()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
           🔄 Trocar Enquete
+        </button>
+
+        <button onclick="zerarEnqueteAtual()" class="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700">
+          🧹 Zerar Enquete
         </button>
       </div>
       <p class="text-xs text-gray-600 mt-2">
@@ -550,6 +556,55 @@ async function toggleResultadoEnquete() {
   } catch (error) {
     console.error('Erro ao toggle resultado:', error);
     alert('❌ Erro ao alterar exibição');
+  }
+}
+
+async function zerarEnqueteAtual() {
+  // Guard-rail: nada ativo
+  if (!sessaoAtual?.enquete_ativa_id) {
+    alert('⚠️ Nenhuma enquete ativa para zerar.');
+    return;
+  }
+
+  if (!confirm('Tem certeza que deseja ZERAR a enquete atual? Todos os votos serão apagados.')) {
+    return;
+  }
+
+  try {
+    const enqueteId = sessaoAtual.enquete_ativa_id;
+
+    // 1) Apagar todos os votos da enquete
+    const { error: errVotos } = await supabase
+      .from('cnv_enquete_votos')
+      .delete()
+      .eq('enquete_id', enqueteId);
+
+    if (errVotos) throw errVotos;
+
+    // 2) Resetar flags da sessão (fecha votação e esconde resultado)
+    const { data, error: errSessao } = await supabase
+      .from('cnv_sessao')
+      .update({
+        enquete_votacao_aberta: false,
+        enquete_mostrar_resultado: false
+      })
+      .eq('id', 1)
+      .select()
+      .single();
+
+    if (errSessao) throw errSessao;
+
+    // Atualiza estado local de sessão
+    sessaoAtual = data;
+
+    // 3) Atualizar UI: status e resultado
+    await carregarControleEnquetes();
+
+    alert('✅ Enquete zerada com sucesso!');
+
+  } catch (error) {
+    console.error('Erro ao zerar enquete:', error);
+    alert('❌ Erro ao zerar enquete. Verifique o console para mais detalhes.');
   }
 }
 
