@@ -28,6 +28,26 @@ let rankingQuiz = [];
 
 // Canais realtime
 let canalSessao = null;
+let canalEnqueteVotos = null;
+
+// Debounce para não spammar o backend
+let timeoutAtualizarResultadoEnquete = null;
+function agendarAtualizarResultadoEnquete() {
+  if (timeoutAtualizarResultadoEnquete) {
+    clearTimeout(timeoutAtualizarResultadoEnquete);
+  }
+  timeoutAtualizarResultadoEnquete = setTimeout(() => {
+    // Só atualiza se estivermos no modo ENQUETE
+    if (modoAtivo === 'enquete') {
+      if (typeof carregarResultadoEnquete === 'function') {
+        carregarResultadoEnquete();
+      } else if (typeof atualizarControle === 'function') {
+        // fallback, caso precise
+        atualizarControle();
+      }
+    }
+  }, 300); // 300ms: dá uma suavizada se chover voto
+}
 
 // ============================================
 // 3. INICIALIZAÇÃO
@@ -156,6 +176,7 @@ async function carregarQuizzes() {
 // ============================================
 
 async function conectarRealtime() {
+  // Canal da sessão
   if (canalSessao) {
     await supabase.removeChannel(canalSessao);
   }
@@ -176,8 +197,36 @@ async function conectarRealtime() {
       atualizarControle();
     })
     .subscribe();
+
+  // Canal dos votos da enquete
+  if (canalEnqueteVotos) {
+    await supabase.removeChannel(canalEnqueteVotos);
+  }
+
+  canalEnqueteVotos = supabase
+    .channel('moderador_enquete_votos')
+    .on('postgres_changes', {
+      event: '*',             // INSERT / DELETE / UPDATE (zera enquete também dispara)
+      schema: 'public',
+      table: 'cnv_enquete_votos'
+    }, (payload) => {
+      // Segurança básica
+      if (!sessaoAtual?.enquete_ativa_id) return;
+
+      const novoVoto = payload.new || payload.old;
+      if (!novoVoto) return;
+
+      // Só reagir à enquete que está ativa na sessão
+      if (novoVoto.enquete_id !== sessaoAtual.enquete_ativa_id) return;
+
+      console.log('🗳️ Mudança em votos da enquete ativa:', payload);
+      
+      // Atualiza painel de resultado com debounce
+      agendarAtualizarResultadoEnquete();
+    })
+    .subscribe();
   
-  console.log('✅ Realtime conectado');
+  console.log('✅ Realtime conectado (sessão + enquete)');
 }
 
 // ============================================
