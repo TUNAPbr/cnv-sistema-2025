@@ -201,16 +201,48 @@
 
     /* Card oceânico */
     .ocean-card {
-      background: #ebeef2 !important;
+      background: linear-gradient(145deg, 
+        #ffffff 0%,
+        #ebeef2 60%,
+        #e0e8f0 100%
+      );
+      border: 3px solid rgba(39, 151, 255, 0.5);
+      border-radius: 28px;
+      box-shadow: 
+        0 20px 60px rgba(39, 151, 255, 0.35),
+        0 8px 16px rgba(0, 0, 0, 0.15),
+        inset 0 2px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -2px 8px rgba(39, 151, 255, 0.1);
       color: #161c24 !important;
-      border-radius: 24px;
-      border: 1px solid rgba(0,0,0,0.08);
-      box-shadow:
-        0 8px 32px rgba(0,0,0,0.25),
-        inset 0 1px 0 rgba(255,255,255,0.4);
-      padding: 2rem;
     }
-
+    
+    .ocean-card h2 {
+      color: #0b67bc !important;
+      font-weight: 900;
+      text-shadow: 0 2px 4px rgba(11, 103, 188, 0.2);
+      letter-spacing: -0.5px;
+    }
+    
+    .ocean-card p {
+      color: #161c24 !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      font-weight: 500;
+    }
+    
+    .ocean-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 20%;
+      width: 60%;
+      height: 40%;
+      background: linear-gradient(180deg, 
+        rgba(255, 255, 255, 0.6) 0%,
+        transparent 100%
+      );
+      border-radius: 28px 28px 0 0;
+      pointer-events: none;
+    }
 
     /* Texto com sombra para legibilidade */
     .ocean-text {
