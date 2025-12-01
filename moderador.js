@@ -322,6 +322,36 @@ function atualizarControle() {
   }
 }
 
+async function forcarRefreshParticipantes() {
+  try {
+    // Garante que temos o metadata atual
+    const metaAtual = (sessaoAtual && sessaoAtual.metadata) ? sessaoAtual.metadata : {};
+
+    const novoToken = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+
+    const novoMetadata = {
+      ...metaAtual,
+      refresh_token: novoToken
+    };
+
+    const { data, error } = await supabase
+      .from('cnv_sessao')
+      .update({ metadata: novoMetadata })
+      .eq('id', 1)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    sessaoAtual = data;
+    alert('✅ Comando de atualização enviado para participantes.');
+
+  } catch (error) {
+    console.error('Erro ao forçar refresh dos participantes:', error);
+    alert('❌ Erro ao enviar comando de atualização.');
+  }
+}
+
 // ============================================
 // CONTINUA NOS PRÓXIMOS ARQUIVOS...
 // ============================================
