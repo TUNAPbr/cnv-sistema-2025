@@ -141,15 +141,23 @@ async function ativarPalestraPerguntas(palestraId) {
 
 async function abrirPerguntasParticipantes() {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('cnv_sessao')
       .update({ perguntas_abertas: true })
-      .eq('id', 1);
-    
+      .eq('id', 1)
+      .select()
+      .single();
+
     if (error) throw error;
-    
+
+    // 🔥 Atualiza sessão local
+    sessaoAtual = data;
+
+    // 🔥 Atualiza UI do módulo de perguntas
+    await carregarControlePerguntas();
+
     alert('✅ Perguntas abertas para participantes!');
-    
+
   } catch (error) {
     console.error('Erro ao abrir perguntas:', error);
     alert('❌ Erro ao abrir perguntas');
@@ -158,15 +166,23 @@ async function abrirPerguntasParticipantes() {
 
 async function fecharPerguntasParticipantes() {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('cnv_sessao')
       .update({ perguntas_abertas: false })
-      .eq('id', 1);
-    
+      .eq('id', 1)
+      .select()
+      .single();
+
     if (error) throw error;
-    
+
+    // 🔥 Atualiza sessão local
+    sessaoAtual = data;
+
+    // 🔥 Atualiza UI do módulo de perguntas
+    await carregarControlePerguntas();
+
     alert('✅ Perguntas fechadas!');
-    
+
   } catch (error) {
     console.error('Erro ao fechar perguntas:', error);
     alert('❌ Erro ao fechar perguntas');
