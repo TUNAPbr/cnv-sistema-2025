@@ -208,7 +208,7 @@ async function renderizarPerguntas() {
       <div class="text-center py-12">
         <div class="text-6xl mb-4">🔒</div>
         <h2 class="text-2xl font-bold text-gray-800 mb-2">${esc(palestraAtual.nome)}</h2>
-        <p class="text-gray-600">Palestrante: ${esc(palestraAtual.palestrante)}</p>
+        <p class="text-gray-600">${esc(palestraAtual.palestrante)}</p>
         <p class="text-gray-500 mt-4">Perguntas fechadas no momento</p>
       </div>
     `;
@@ -222,8 +222,7 @@ async function renderizarPerguntas() {
     <div>
       <div class="text-center mb-6">
         <h2 class="text-2xl font-bold text-gray-800">${esc(palestraAtual.nome)}</h2>
-        <p class="text-gray-600">Palestrante: ${esc(palestraAtual.palestrante)}</p>
-        <p class="text-sm text-gray-500 mt-2">Você pode fazer até ${palestraAtual.max_perguntas_por_device} perguntas</p>
+        <p class="text-gray-600">${esc(palestraAtual.palestrante)}</p>
       </div>
       
       ${validacao.pode ? `
@@ -231,7 +230,7 @@ async function renderizarPerguntas() {
           <div>
             <label class="block text-sm font-bold mb-2">Seu nome (opcional)</label>
             <input type="text" id="nomeAutor" class="w-full p-3 border rounded-lg" 
-                   placeholder="Digite seu nome ou deixe em branco para anônimo">
+                   placeholder="Digite seu nome aqui">
             <label class="flex items-center mt-2">
               <input type="checkbox" id="checkAnonimo" class="mr-2">
               <span class="text-sm">Enviar como anônimo</span>
@@ -246,10 +245,10 @@ async function renderizarPerguntas() {
           
           <div>
             <label class="block text-sm font-bold mb-2">Sua pergunta *</label>
-            <textarea id="perguntaTexto" rows="4" required maxlength="500" 
+            <textarea id="perguntaTexto" rows="4" required maxlength="140"
                       class="w-full p-3 border rounded-lg" 
                       placeholder="Digite sua pergunta aqui..."></textarea>
-            <p class="text-xs text-gray-500 mt-1">Máximo 500 caracteres</p>
+            <p class="text-xs text-gray-500 mt-1">Máximo 140 caracteres</p>
           </div>
           
           <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
