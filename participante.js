@@ -115,7 +115,6 @@ async function conectarRealtime() {
       console.log('🔔 Sessão atualizada:', payload.new);
       const novaSessao = payload.new;
     
-      // 🔥 Detecta comando global de refresh
       const tokenAntigo = sessao?.metadata?.refresh_token;
       const tokenNovo  = novaSessao?.metadata?.refresh_token;
     
@@ -125,7 +124,6 @@ async function conectarRealtime() {
         return;
       }
     
-      // Comportamento normal
       sessao = novaSessao;
       await renderizar();
     })
