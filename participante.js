@@ -4,6 +4,44 @@
 // ============================================
 
 // ============================================
+// UTILITÁRIO: NORMALIZAR OPÇÕES DE ENQUETE
+// ============================================
+
+function normalizarOpcoesEnquete(raw) {
+  if (Array.isArray(raw)) return raw;
+
+  if (raw === null || raw === undefined) return [];
+
+  // Se for objeto JSON (caso raro)
+  if (typeof raw === 'object') {
+    try {
+      return Array.isArray(raw) ? raw : Object.values(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  // Se for string
+  if (typeof raw === 'string') {
+    const s = raw.trim();
+    if (!s) return [];
+
+    // 1) Tenta interpretar como JSON (ex: '["Top","Muito bom"]')
+    try {
+      const parsed = JSON.parse(s);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // ignora erro, cai pro split
+    }
+
+    // 2) fallback: string simples separada por vírgula
+    return s.split(',').map(o => o.trim()).filter(Boolean);
+  }
+
+  return [];
+}
+
+// ============================================
 // CONFIGURAÇÃO SUPABASE
 // ============================================
 
@@ -431,7 +469,7 @@ async function renderizarEnquetes() {
   }
   
   // Mostrar opções
-  const opcoes = JSON.parse(enqueteAtual.opcoes);
+  const opcoes = normalizarOpcoesEnquete(enqueteAtual.opcoes);
   
   container.innerHTML = `
     <div>
