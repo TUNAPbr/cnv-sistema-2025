@@ -7,25 +7,248 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    :root {
+      /* Paleta TUNAP */
+      --cnv-primary: #2797ff;
+      --cnv-secondary: #0b67bc;
+      --cnv-tertiary: #acc420;
+      --cnv-alternate: #e0e3e7;
+      --cnv-text-primary: #161c24;
+      --cnv-text-secondary: #636f81;
+      --cnv-bg-primary: #ebeef2;
+      --cnv-bg-secondary: #fefefe;
+    }
+
     body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(180deg, 
+        var(--cnv-primary) 0%, 
+        var(--cnv-secondary) 50%, 
+        #063d6e 100%
+      );
+      position: relative;
     }
+
+    /* ================================ */
+    /* OCEANO - CAMADAS DE FUNDO */
+    /* ================================ */
+
+    .ocean-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Raios de luz (crepuscular) */
+    .light-rays {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.03) 50%, transparent 60%),
+        linear-gradient(160deg, transparent 30%, rgba(255,255,255,0.02) 40%, transparent 50%),
+        linear-gradient(200deg, transparent 50%, rgba(255,255,255,0.03) 60%, transparent 70%);
+      animation: lightShift 20s ease-in-out infinite;
+    }
+
+    @keyframes lightShift {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Partículas flutuantes (plâncton) */
+    .particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      background: var(--cnv-tertiary);
+      border-radius: 50%;
+      opacity: 0;
+      animation: floatParticle 15s infinite ease-in-out;
+      box-shadow: 0 0 8px var(--cnv-tertiary);
+    }
+
+    .particle:nth-child(1) { left: 10%; width: 4px; height: 4px; animation-delay: 0s; animation-duration: 18s; }
+    .particle:nth-child(2) { left: 25%; width: 6px; height: 6px; animation-delay: 2s; animation-duration: 16s; }
+    .particle:nth-child(3) { left: 45%; width: 3px; height: 3px; animation-delay: 4s; animation-duration: 20s; }
+    .particle:nth-child(4) { left: 60%; width: 5px; height: 5px; animation-delay: 1s; animation-duration: 17s; }
+    .particle:nth-child(5) { left: 80%; width: 4px; height: 4px; animation-delay: 3s; animation-duration: 19s; }
+    .particle:nth-child(6) { left: 15%; width: 5px; height: 5px; animation-delay: 5s; animation-duration: 15s; }
+    .particle:nth-child(7) { left: 35%; width: 3px; height: 3px; animation-delay: 2.5s; animation-duration: 21s; }
+    .particle:nth-child(8) { left: 70%; width: 6px; height: 6px; animation-delay: 4.5s; animation-duration: 18s; }
+
+    @keyframes floatParticle {
+      0% { 
+        transform: translateY(110vh) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.4;
+      }
+      50% {
+        transform: translateY(50vh) translateX(30px);
+        opacity: 0.6;
+      }
+      90% {
+        opacity: 0.3;
+      }
+      100% { 
+        transform: translateY(-10vh) translateX(-20px);
+        opacity: 0;
+      }
+    }
+
+    /* Ondas no topo */
+    .waves {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 150px;
+      background: var(--cnv-tertiary);
+      opacity: 0.12;
+      clip-path: polygon(
+        0 40%, 
+        10% 35%, 
+        20% 45%, 
+        30% 38%, 
+        40% 48%, 
+        50% 40%, 
+        60% 45%, 
+        70% 38%, 
+        80% 43%, 
+        90% 38%, 
+        100% 45%, 
+        100% 0, 
+        0 0
+      );
+      animation: waveMove 8s ease-in-out infinite;
+    }
+
+    @keyframes waveMove {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(-30px); }
+    }
+
+    /* Vignette (foco central) */
+    .vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 20%,
+        rgba(0, 0, 0, 0.15) 80%,
+        rgba(0, 0, 0, 0.3) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* ================================ */
+    /* CONTEÚDO */
+    /* ================================ */
+
+    #telaoContainer {
+      position: relative;
+      z-index: 10;
+      color: white;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.6s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Animação de respiração (modo aguardando) */
+    .breathe {
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.03); opacity: 0.9; }
+    }
+
+    /* Countdown pulse */
     .countdown-display {
       animation: pulse 1s ease-in-out infinite;
     }
+
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
     }
-    .fade-in {
-      animation: fadeIn 0.5s ease-in;
+
+    /* Card oceânico */
+    .ocean-card {
+      background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(255, 255, 255, 0.08) 100%
+      );
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+
+    /* Texto com sombra para legibilidade */
+    .ocean-text {
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Glow effect para destaques */
+    .glow-tertiary {
+      color: var(--cnv-tertiary);
+      text-shadow: 
+        0 0 10px var(--cnv-tertiary),
+        0 0 20px rgba(172, 196, 32, 0.5);
+    }
+
+    /* Bolhas animadas (modo perguntas) */
+    .bubble {
+      animation: bubbleFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes bubbleFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.02); }
+    }
+
+    /* Shimmer effect */
+    .shimmer {
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
     }
   </style>
 </head>
@@ -35,8 +258,26 @@
 
 <body class="min-h-screen flex items-center justify-center text-white">
   
+  <!-- Background oceânico -->
+  <div class="ocean-background">
+    <div class="light-rays"></div>
+    <div class="particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+    <div class="waves"></div>
+    <div class="vignette"></div>
+  </div>
+
+  <!-- Conteúdo dinâmico -->
   <div id="telaoContainer" class="w-full h-screen p-8">
-    <!-- Conteúdo dinâmico -->
+    <!-- Renderizado via JS -->
   </div>
 
   <script src="telao.js"></script>
