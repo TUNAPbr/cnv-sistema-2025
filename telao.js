@@ -146,7 +146,19 @@ async function conectarRealtime() {
         await renderizar();
       }
     })
+
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'cnv_quiz_participantes'
+    }, async () => {
+      // Só faz sentido atualizar se o telão estiver no modo quiz
+      if (sessao?.modo === 'quiz' && sessao.quiz_estado === 'cadastro_nomes') {
+        await renderizar();
+      }
+    })
     .subscribe();
+
 }
 
 // ============================================
@@ -375,21 +387,23 @@ async function renderizarQuiz() {
   }
   
   const estado = sessao.quiz_estado;
-  
-  if (estado === 'cadastro') {
-    renderizarQuizCadastro();
-  } else if (estado === 'aguardando') {
-    renderizarQuizAguardando();
-  } else if (estado === 'countdown3s') {
-    renderizarQuizCountdown3s();
-  } else if (estado === 'pergunta') {
+
+  if (estado === 'cadastro_nomes') {
+    await renderizarQuizCadastro();
+  } else if (estado === 'aguardando_inicio') {
+    await renderizarQuizAguardando();
+  } else if (estado === 'countdown_3s') {
+    await renderizarQuizCountdown3s();
+  } else if (estado === 'jogando_pergunta') {
     await renderizarQuizPergunta();
   } else if (estado === 'tempo_esgotado') {
     renderizarQuizTempoEsgotado();
-  } else if (estado === 'resultado_pergunta') {
+  } else if (estado === 'resposta_revelada') {
     await renderizarQuizResultado();
   } else if (estado === 'ranking') {
     await renderizarQuizRanking();
+  } else {
+    await renderizarQuizAguardando();
   }
 }
 
