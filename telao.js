@@ -723,46 +723,73 @@ async function renderizarQuizPergunta() {
   }
   
   if (!perguntaQuizAtual) return;
-  
-  const tempoLimite = perguntaQuizAtual.tempo_limite_seg;
-  
+
+  // Tempo limite da pergunta (fallback 30s se vier vazio)
+  const tempoLimite = perguntaQuizAtual.tempo_limite_seg || quizAtual?.tempo_limite_seg || 30;
+
+  const nomeQuiz = quizAtual?.nome || 'Quiz';
+
   container.innerHTML = `
-    <div class="flex flex-col h-full">
-      <div class="text-center mb-8">
-        <h2 class="text-4xl font-bold glow-tertiary">Pergunta ${perguntaQuizAtual.ordem}</h2>
-        <div id="tempoRestante" class="text-6xl font-bold mt-4 ocean-text">${tempoLimite}s</div>
-      </div>
-      
-      <div class="flex-1 flex flex-col items-center justify-center">
-        <div class="ocean-card rounded-3xl p-12 max-w-5xl w-full mb-8">
-          <p class="text-5xl font-bold text-center leading-relaxed ocean-text">${esc(perguntaQuizAtual.pergunta)}</p>
+    <div class="flex flex-col items-center justify-center h-full select-none px-8">
+
+      <!-- TÍTULO QUIZ + PERGUNTA -->
+      <div class="text-center mb-10">
+        <h2 class="text-5xl font-extrabold ocean-text mb-2">
+          ${esc(nomeQuiz)}
+        </h2>
+        <p class="text-3xl text-gray-200 opacity-80">
+          Pergunta ${perguntaQuizAtual.ordem}
+        </p>
+
+        <!-- TIMER -->
+        <div id="tempoRestante" class="mt-6 inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/10 border border-white/20 text-3xl font-bold ocean-text">
+          ⏱️ <span>${tempoLimite}s</span>
         </div>
-        
-        <div class="grid grid-cols-2 gap-6 max-w-5xl w-full">
-          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #3b82f6;">
-            <p class="text-4xl font-bold ocean-text">A) ${esc(perguntaQuizAtual.opcao_a)}</p>
-          </div>
-          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #10b981;">
-            <p class="text-4xl font-bold ocean-text">B) ${esc(perguntaQuizAtual.opcao_b)}</p>
-          </div>
-          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #06b6d4;">
-            <p class="text-4xl font-bold ocean-text">C) ${esc(perguntaQuizAtual.opcao_c)}</p>
-          </div>
-          <div class="ocean-card rounded-2xl p-6" style="border-left: 4px solid #acc420;">
-            <p class="text-4xl font-bold ocean-text">D) ${esc(perguntaQuizAtual.opcao_d)}</p>
-          </div>
-        </div>
+
+        <!-- LINHA SONAR -->
+        <div class="w-64 h-[3px] sonar-line mt-8 mx-auto"></div>
       </div>
+
+      <!-- PERGUNTA -->
+      <div class="backdrop-blur-3xl bg-white/10 border border-white/20 rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.35)]
+                  max-w-5xl w-full px-10 py-10 mb-10">
+        <p class="text-5xl font-semibold text-white leading-snug text-center break-words">
+          ${esc(perguntaQuizAtual.pergunta)}
+        </p>
+      </div>
+
+      <!-- OPÇÕES -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl w-full">
+        ${[
+          { letra: 'A', texto: perguntaQuizAtual.opcao_a, cor: '#3b82f6' },
+          { letra: 'B', texto: perguntaQuizAtual.opcao_b, cor: '#10b981' },
+          { letra: 'C', texto: perguntaQuizAtual.opcao_c, cor: '#06b6d4' },
+          { letra: 'D', texto: perguntaQuizAtual.opcao_d, cor: '#acc420' },
+        ].map(op => `
+          <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-6 py-5 shadow-lg flex gap-4 items-start">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold text-white"
+                 style="background:${op.cor};">
+              ${op.letra}
+            </div>
+            <p class="text-3xl text-white leading-snug break-words">
+              ${esc(op.texto || '')}
+            </p>
+          </div>
+        `).join('')}
+      </div>
+
     </div>
   `;
-  
-  // Countdown visual
+
+  // TIMER REGRESSIVO
   let tempo = tempoLimite;
   const intervalo = setInterval(() => {
     tempo--;
     const el = document.getElementById('tempoRestante');
     if (el) {
-      el.textContent = `${tempo}s`;
+      const span = el.querySelector('span');
+      if (span) span.textContent = `${tempo}s`;
+
       if (tempo <= 5) {
         el.classList.remove('ocean-text');
         el.classList.add('text-yellow-400', 'countdown-display');
@@ -793,7 +820,7 @@ async function renderizarQuizResultado() {
   
   if (!perguntaQuizAtual) return;
   
-  // Buscar estatísticas
+  // Buscar estatísticas agregadas da pergunta
   const { data: stats } = await supabase.rpc('cnv_stats_pergunta_quiz', {
     p_pergunta_id: perguntaQuizAtual.id
   });
@@ -810,37 +837,80 @@ async function renderizarQuizResultado() {
   };
   
   const correta = perguntaQuizAtual.resposta_correta;
-  
+  const nomeQuiz = quizAtual?.nome || 'Quiz';
+
   container.innerHTML = `
-    <div class="flex flex-col h-full">
-      <div class="text-center mb-8">
-        <div class="ocean-card rounded-3xl p-6 inline-block mb-4" style="border: 3px solid #10b981;">
-          <p class="text-5xl font-bold glow-tertiary">✓ RESPOSTA CORRETA: ${correta}</p>
-        </div>
-        <p class="text-4xl ocean-text">${percentualAcerto}% acertaram</p>
-        <p class="text-2xl text-gray-300">${totalRespostas} respostas</p>
+    <div class="flex flex-col items-center justify-center h-full select-none px-8">
+
+      <!-- TÍTULO -->
+      <div class="text-center mb-10">
+        <h2 class="text-5xl font-extrabold ocean-text mb-2">
+          ${esc(nomeQuiz)}
+        </h2>
+        <p class="text-3xl text-gray-200 opacity-80 mb-4">
+          Resultado da Pergunta ${perguntaQuizAtual.ordem}
+        </p>
+        <div class="w-64 h-[3px] sonar-line mx-auto"></div>
       </div>
-      
-      <div class="grid grid-cols-4 gap-4 px-8">
+
+      <!-- BLOCO RESPOSTA CORRETA -->
+      <div class="backdrop-blur-3xl bg-white/10 border-4 border-green-300/80 rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.35)]
+                  max-w-5xl w-full px-10 py-8 mb-10 animate-[fadeZoom_0.4s_ease-out]">
+
+        <p class="text-2xl text-green-200 mb-3">
+          Resposta correta
+        </p>
+
+        <p class="text-4xl font-extrabold text-white mb-4 leading-snug break-words">
+          ${correta}) ${esc(opcoes[correta] || '')}
+        </p>
+
+        <div class="flex items-baseline justify-center gap-6">
+          <p class="text-6xl font-extrabold text-green-300">
+            ${percentualAcerto}%
+          </p>
+          <p class="text-2xl text-gray-200">
+            acertaram
+          </p>
+        </div>
+
+        <p class="text-2xl text-gray-300 mt-3">
+          ${totalRespostas} resposta${totalRespostas === 1 ? '' : 's'}
+        </p>
+      </div>
+
+      <!-- DISTRIBUIÇÃO DAS RESPOSTAS -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl w-full mb-6">
         ${['A', 'B', 'C', 'D'].map(letra => {
           const isCorreta = letra === correta;
           const dados = distribuicao[letra] || { votos: 0, percentual: 0 };
           
           return `
-            <div class="ocean-card rounded-2xl p-6 ${isCorreta ? 'ring-4 ring-yellow-400' : ''}">
-              <div class="text-center mb-4">
-                <p class="text-4xl font-bold ocean-text">${letra}</p>
-                ${isCorreta ? '<p class="text-4xl glow-tertiary">✓</p>' : ''}
+            <div class="backdrop-blur-xl bg-white/10 border ${isCorreta ? 'border-green-300/80' : 'border-white/20'}
+                        rounded-2xl px-6 py-5 shadow-lg text-center">
+
+              <p class="text-3xl font-extrabold text-white mb-1">
+                ${letra}
+              </p>
+              ${isCorreta ? '<p class="text-xl text-green-300 mb-1">Correta</p>' : ''}
+
+              <p class="text-2xl text-gray-100 mb-2">
+                ${dados.votos} voto${dados.votos === 1 ? '' : 's'}
+              </p>
+
+              <div class="w-full bg-white/20 rounded-full h-4 overflow-hidden mb-2">
+                <div class="h-4 rounded-full"
+                     style="width: ${dados.percentual || 0}%; background: linear-gradient(90deg, #22c55e, #4ade80);"></div>
               </div>
-              <p class="text-2xl font-bold text-center ocean-text">${dados.votos} votos</p>
-              <div class="w-full bg-white bg-opacity-30 rounded-full h-4 mt-3 overflow-hidden">
-                <div class="bg-gradient-to-r from-blue-400 to-blue-600 h-4 rounded-full shimmer transition-all duration-1000" style="width: ${dados.percentual || 0}%"></div>
-              </div>
-              <p class="text-xl text-center mt-2 ocean-text">${dados.percentual || 0}%</p>
+
+              <p class="text-xl text-gray-100">
+                ${dados.percentual || 0}%
+              </p>
             </div>
           `;
         }).join('')}
       </div>
+
     </div>
   `;
 }
@@ -853,30 +923,61 @@ async function renderizarQuizRanking() {
   });
   
   const top10 = (ranking || []).slice(0, 10);
-  
+  const nomeQuiz = quizAtual?.nome || 'Quiz';
+
   container.innerHTML = `
-    <div class="flex flex-col h-full">
-      <h1 class="text-8xl font-bold text-center mb-12 ocean-text breathe">🏆 RANKING</h1>
-      
-      <div class="space-y-4 px-12">
+    <div class="flex flex-col items-center justify-center h-full select-none px-8">
+
+      <!-- TÍTULO -->
+      <div class="text-center mb-10">
+        <h1 class="text-6xl font-extrabold ocean-text mb-2">
+          🏆 Ranking do Quiz
+        </h1>
+        <p class="text-3xl text-gray-200 opacity-80">
+          ${esc(nomeQuiz)}
+        </p>
+        <div class="w-64 h-[3px] sonar-line mx-auto mt-6"></div>
+      </div>
+
+      <!-- LISTA TOP 10 -->
+      <div class="max-w-5xl w-full space-y-4">
         ${top10.map(r => {
-          const medal = r.posicao === 1 ? '🥇' : r.posicao === 2 ? '🥈' : r.posicao === 3 ? '🥉' : `${r.posicao}º`;
-          const isTop3 = r.posicao <= 3;
-          
+          const medal = r.posicao === 1 ? '🥇'
+                       : r.posicao === 2 ? '🥈'
+                       : r.posicao === 3 ? '🥉'
+                       : `${r.posicao}º`;
+
+          const destaqueClasse = r.posicao <= 3
+            ? 'bg-white/15 border-yellow-300/70'
+            : 'bg-white/8 border-white/20';
+
           return `
-            <div class="ocean-card rounded-2xl p-6 flex items-center justify-between bubble ${isTop3 ? 'ring-2 ring-yellow-400' : ''}" style="animation-delay: ${r.posicao * 0.1}s">
+            <div class="backdrop-blur-2xl ${destaqueClasse} rounded-3xl px-8 py-4 shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+                        flex items-center justify-between">
+
               <div class="flex items-center gap-6">
-                <span class="text-6xl font-bold">${medal}</span>
-                <span class="text-5xl font-bold ocean-text">${esc(r.nome)}</span>
+                <span class="text-5xl">
+                  ${medal}
+                </span>
+                <span class="text-3xl md:text-4xl font-semibold text-white break-words">
+                  ${esc(r.nome || '')}
+                </span>
               </div>
+
               <div class="text-right">
-                <p class="text-5xl font-bold glow-tertiary shimmer">${r.pontos_totais} pts</p>
-                <p class="text-2xl text-gray-200">${r.total_acertos} acertos</p>
+                <p class="text-4xl font-extrabold text-green-300">
+                  ${r.pontos_totais} pts
+                </p>
+                <p class="text-xl text-gray-200">
+                  ${r.total_acertos} acerto${r.total_acertos === 1 ? '' : 's'}
+                </p>
               </div>
+
             </div>
           `;
         }).join('')}
       </div>
+
     </div>
   `;
 }
