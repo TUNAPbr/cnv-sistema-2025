@@ -1126,6 +1126,66 @@ async function renderizarQuizPergunta() {
   }, 1000);
 }
 
+function renderizarQuizTempoEsgotado() {
+  const container = document.getElementById('participanteContainer');
+  
+  if (minhaResposta) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">✅</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Você respondeu a tempo!
+          </h2>
+
+          <p class="text-md text-gray-700 max-w-sm">
+            Aguarde a revelação da resposta correta.
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Sua resposta já foi registrada para esta pergunta.
+        </p>
+
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">⏰</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-red-600 drop-shadow-sm">
+            TEMPO ESGOTADO
+          </h2>
+
+          <p class="text-md text-gray-700 max-w-sm">
+            Você não respondeu a tempo esta pergunta.
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Fique atento às próximas rodadas. 😉
+        </p>
+
+      </div>
+    `;
+  }
+}
+
 async function responderQuiz(opcao) {
   const tempoResposta = Math.floor((Date.now() - (window.inicioContagem || Date.now())) / 1000);
   
