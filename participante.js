@@ -756,6 +756,8 @@ async function renderizarQuiz() {
     renderizarQuizTempoEsgotado();
   } else if (estado === 'resposta_revelada') {
     await mostrarFeedbackQuiz();
+  } else if (estado === 'ranking') {
+    await renderizarQuizResultadoFinal();
   } else {
     renderizarQuizAguardando();
   }
@@ -1345,6 +1347,171 @@ async function mostrarFeedbackQuiz() {
       </div>
     `;
   }
+}
+
+async function renderizarQuizResultadoFinal() {
+  const container = document.getElementById('participanteContainer');
+
+  if (!quizAtual) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-center text-center px-6 py-10 animate-fadein">
+        <h2 class="text-2xl font-extrabold text-gray-800 mb-2">Quiz finalizado</h2>
+        <p class="text-md text-gray-700">Aguarde o ranking geral no telão.</p>
+      </div>
+    `;
+    return;
+  }
+
+  let rankingGeral = [];
+
+  try {
+    const { data, error } = await supabase.rpc('cnv_ranking_quiz', {
+      p_quiz_id: quizAtual.id
+    });
+
+    if (error) throw error;
+    rankingGeral = data || [];
+  } catch (error) {
+    console.error('Erro ao carregar ranking do quiz:', error);
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-center text-center px-6 py-10 animate-fadein">
+        <h2 class="text-2xl font-extrabold text-gray-800 mb-2">Quiz finalizado</h2>
+        <p class="text-md text-red-600">Não foi possível carregar seu resultado agora.</p>
+        <p class="text-sm text-gray-600 mt-2">Confira o ranking no telão.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (!rankingGeral.length) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-center text-center px-6 py-10 animate-fadein">
+        <h2 class="text-2xl font-extrabold text-gray-800 mb-2">Quiz finalizado</h2>
+        <p class="text-md text-gray-700">O ranking ainda está sendo processado.</p>
+        <p class="text-sm text-gray-600 mt-2">Confira o resultado no telão em instantes.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Tenta achar o participante no ranking:
+  // 1) por device_id (se existir na função)
+  // 2) por nome cadastrado (fallback)
+  let meuRegistro = rankingGeral.find(r => r.device_id === deviceId);
+
+  if (!meuRegistro && typeof participanteQuiz !== 'undefined' && participanteQuiz?.nome) {
+    const meuNome = participanteQuiz.nome.trim().toLowerCase();
+    meuRegistro = rankingGeral.find(r => (r.nome || '').trim().toLowerCase() === meuNome);
+  }
+
+  if (!meuRegistro) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">🤔</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Quiz finalizado
+          </h2>
+
+          <p class="text-md text-gray-700 max-w-sm">
+            Seu resultado ainda não foi localizado no ranking.
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Confira o ranking geral no telão.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const posicao = meuRegistro.posicao;
+  const pontos = meuRegistro.pontos_totais;
+  const acertos = meuRegistro.total_acertos;
+  const nome = meuRegistro.nome || (participanteQuiz?.nome ?? 'Você');
+
+  let medal;
+  if (posicao === 1) medal = '🥇';
+  else if (posicao === 2) medal = '🥈';
+  else if (posicao === 3) medal = '🥉';
+  else medal = `${posicao}º`;
+
+  // Top 3 para contexto visual
+  const top3 = rankingGeral.slice(0, 3);
+
+  container.innerHTML = `
+    <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+      
+      <div></div>
+
+      <div class="flex flex-col items-center gap-6 animate-slideup">
+
+        <div class="w-28 h-28 flex items-center justify-center rounded-full 
+                    bg-white/20 backdrop-blur-md shadow-xl">
+          <div class="text-4xl">${medal}</div>
+        </div>
+
+        <div>
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm mb-1">
+            Resultado do Quiz
+          </h2>
+          <p class="text-md text-gray-600">
+            ${esc(quizAtual.nome)}
+          </p>
+        </div>
+
+        <div class="bg-white/90 rounded-2xl px-6 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.15)] text-left w-full max-w-md">
+          <p class="text-sm text-gray-500 mb-1">Participante</p>
+          <p class="text-xl font-bold text-gray-800 mb-3">${esc(nome)}</p>
+
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-600">Posição</p>
+            <p class="text-lg font-extrabold text-blue-700">${posicao}º lugar</p>
+          </div>
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-sm text-gray-600">Pontos</p>
+            <p class="text-lg font-extrabold text-green-600">${pontos} pts</p>
+          </div>
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-gray-600">Acertos</p>
+            <p class="text-lg font-bold text-gray-800">${acertos}</p>
+          </div>
+        </div>
+
+        ${top3.length ? `
+          <div class="w-full max-w-md bg-white/80 rounded-2xl px-5 py-4 shadow-md text-left">
+            <p class="text-sm font-semibold text-gray-700 mb-2">Top 3 geral</p>
+            <div class="space-y-1 text-sm">
+              ${top3.map(r => `
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg">
+                      ${r.posicao === 1 ? '🥇' : r.posicao === 2 ? '🥈' : r.posicao === 3 ? '🥉' : r.posicao + 'º'}
+                    </span>
+                    <span class="font-medium">${esc(r.nome)}</span>
+                  </div>
+                  <span class="font-semibold text-gray-800">${r.pontos_totais} pts</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+      </div>
+
+      <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+        Obrigado por participar! 👏 Acompanhe o ranking completo no telão.
+      </p>
+    </div>
+  `;
 }
 
 // ============================================
