@@ -11,7 +11,6 @@ async function renderizarModo() {
   if (sessao.modo === 'quiz') return renderizarQuiz();
 }
 
-
 const frasesMotivacionais = [
   "No mar de oportunidades, quem navega com foco fecha mais negócios.",
   "Venda é como maré: quando sobe, só surfa quem estava pronto.",
@@ -35,168 +34,53 @@ const frasesMotivacionais = [
   "A maré da meta virou: hora de navegar forte e buscar o seu melhor trimestre."
 ];
 
+let indiceFrase = 0;
+let intervaloFrases = null;
 
+function iniciarRotacaoFrases() {
+  const elemento = document.getElementById("fraseMotivacional");
+  if (!elemento) return;
 
-// ============================================
-// UTILITÁRIO: NORMALIZAR OPÇÕES DE ENQUETE
-// ============================================
+  if (intervaloFrases) clearInterval(intervaloFrases);
 
-function normalizarOpcoesEnquete(raw) {
-  if (Array.isArray(raw)) return raw;
+  elemento.textContent = frasesMotivacionais[indiceFrase];
 
-  if (raw === null || raw === undefined) return [];
+  intervaloFrases = setInterval(() => {
+    indiceFrase = (indiceFrase + 1) % frasesMotivacionais.length;
 
-  // Se for objeto JSON (caso raro)
-  if (typeof raw === 'object') {
-    try {
-      return Array.isArray(raw) ? raw : Object.values(raw);
-    } catch {
-      return [];
-    }
-  }
+    elemento.classList.add("fade-out");
 
-  // Se for string
-  if (typeof raw === 'string') {
-    const s = raw.trim();
-    if (!s) return [];
+    setTimeout(() => {
+      elemento.textContent = frasesMotivacionais[indiceFrase];
+      elemento.classList.remove("fade-out");
+      elemento.classList.add("fade-in");
 
-    // 1) Tenta interpretar como JSON (ex: '["Top","Muito bom"]')
-    try {
-      const parsed = JSON.parse(s);
-      if (Array.isArray(parsed)) return parsed;
-    } catch {
-      // ignora erro, cai pro split
-    }
-
-    // 2) fallback: string simples separada por vírgula
-    return s.split(',').map(o => o.trim()).filter(Boolean);
-  }
-
-  return [];
+      setTimeout(() => {
+        elemento.classList.remove("fade-in");
+      }, 900);
+    }, 900);
+  }, 12000); // 12s para ficar mais suave
 }
-
-// ============================================
-// CONFIGURAÇÃO SUPABASE
-// ============================================
-const supabase = window.supabaseClient;
 
 // ============================================
 // ESTADO GLOBAL
 // ============================================
 
 let sessao = null;
-let config = null;
-let canal = null;
-
-// Dados carregados
 let palestraAtual = null;
-let perguntaExibida = null;
 let enqueteAtual = null;
 let quizAtual = null;
-let perguntaQuizAtual = null;
 
 // ============================================
-// INICIALIZAÇÃO
+// SUPABASE
 // ============================================
 
-async function inicializar() {
-  console.log('🖥️ Inicializando telão...');
-  
-  try {
-    await carregarConfig();
-    await carregarSessao();
-    await conectarRealtime();
-    await renderizar();
-    
-    console.log('✅ Telão inicializado');
-    
-  } catch (error) {
-    console.error('❌ Erro ao inicializar telão:', error);
-    mostrarErro('Erro ao conectar. Verifique as credenciais do Supabase.');
-  }
-}
-
-async function carregarConfig() {
-  const { data } = await supabase
-    .from('cnv_config')
-    .select('*')
-    .eq('id', 1)
-    .single();
-  
-  config = data;
-  
-  if (config) {
-    document.documentElement.style.setProperty('--cnv-primary', config.cor_primaria || '#2797ff');
-    document.documentElement.style.setProperty('--cnv-secondary', config.cor_secundaria || '#0b67bc');
-  }
-}
-
-async function carregarSessao() {
-  const { data } = await supabase
-    .from('cnv_sessao')
-    .select('*')
-    .eq('id', 1)
-    .single();
-  
-  sessao = data;
-}
+const supabaseUrl = 'https://qsztainariaiznbblrap.supabase.co';
+const supabaseKey = SUPABASE_CONFIG.SUPABASE_PUBLIC_KEY;
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ============================================
-// REALTIME
-// ============================================
-
-async function conectarRealtime() {
-  if (canal) {
-    await supabase.removeChannel(canal);
-  }
-  
-  canal = supabase
-    .channel('telao')
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'cnv_sessao',
-      filter: 'id=eq.1'
-    }, async (payload) => {
-      console.log('🔔 Sessão atualizada:', payload.new);
-      sessao = payload.new;
-      await renderizar();
-    })
-    .on('postgres_changes', {
-      event: '*',  // INSERT + UPDATE + DELETE
-      schema: 'public',
-      table: 'cnv_perguntas'
-    }, async () => {
-      if (sessao?.modo === 'perguntas') {
-        renderizarPerguntas(); // sem fade geral, mais rápido
-      }
-    })
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'cnv_quiz_perguntas'
-    }, async () => {
-      if (sessao?.modo === 'quiz') {
-        await renderizar();
-      }
-    })
-
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'cnv_quiz_participantes'
-    }, async () => {
-      // Só faz sentido atualizar se o telão estiver no modo quiz
-      if (sessao?.modo === 'quiz' && sessao.quiz_estado === 'cadastro_nomes') {
-        await renderizar();
-      }
-    })
-    .subscribe();
-
-}
-
-// ============================================
-// RENDERIZAÇÃO PRINCIPAL
+// RENDERIZAÇÃO GERAL COM TRANSIÇÃO
 // ============================================
 
 async function renderizar() {
@@ -204,7 +88,7 @@ async function renderizar() {
 
   const container = document.getElementById('telaoContainer');
 
-  // só anima quando o modo muda
+  // Se mudou o modo, faz fade
   if (ultimoModoTelao !== sessao.modo) {
     container.classList.remove('fade-in');
     container.classList.add('fade-out');
@@ -216,14 +100,13 @@ async function renderizar() {
       ultimoModoTelao = sessao.modo;
       await renderizarModo();
     }, 160);
-    
+
     return;
   }
 
-  // não mudou o modo → renderiza sem animação
+  // Mesmo modo → só renderiza sem fade
   await renderizarModo();
 }
-
 
 // ============================================
 // MODO: AGUARDANDO
@@ -232,6 +115,8 @@ async function renderizar() {
 function renderizarAguardando() {
   const container = document.getElementById('telaoContainer');
   
+  const config = window.CNV_CONFIG || {};
+
   container.innerHTML = `
     <div class="relative flex flex-col items-center justify-center h-full breathe overflow-hidden">
 
@@ -251,37 +136,6 @@ function renderizarAguardando() {
 
   iniciarRotacaoFrases();
 }
-
-let indiceFrase = 0;
-let intervaloFrases = null;
-
-function iniciarRotacaoFrases() {
-  const elemento = document.getElementById("fraseMotivacional");
-  if (!elemento) return;
-
-  // evita múltiplos timers
-  if (intervaloFrases) clearInterval(intervaloFrases);
-
-  // define primeira frase imediatamente
-  elemento.textContent = frasesMotivacionais[indiceFrase];
-
-  intervaloFrases = setInterval(() => {
-    indiceFrase = (indiceFrase + 1) % frasesMotivacionais.length;
-
-    elemento.classList.add("fade-out");
-
-    setTimeout(() => {
-      elemento.textContent = frasesMotivacionais[indiceFrase];
-      elemento.classList.remove("fade-out");
-      elemento.classList.add("fade-in");
-
-      setTimeout(() => {
-        elemento.classList.remove("fade-in");
-      }, 900);
-    }, 900);
-  }, 11000); // tempo total de troca (11s)
-}
-
 
 // ============================================
 // MODO: PERGUNTAS
@@ -318,99 +172,95 @@ async function renderizarPerguntas() {
   if (pergunta) {
     const nomeAutor = pergunta.nome_autor ? esc(pergunta.nome_autor) : "Anônimo";
     const avatarEmoji = pergunta.nome_autor ? "🧑" : "🕵️";
-  
+
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full select-none">
-  
+
         <div class="backdrop-blur-3xl bg-white/10 border border-white/20
                     shadow-[0_12px_60px_rgba(0,0,0,0.35)]
                     rounded-3xl max-w-5xl w-full p-16 animate-[fadeZoom_0.4s_ease-out]">
-  
-          <!-- Header -->
+
           <h2 class="text-4xl font-extrabold mb-2 ocean-text">
             ${esc(palestraAtual.nome)}
           </h2>
-  
+
           <p class="text-2xl text-gray-100 opacity-80 mb-8">
             ${esc(palestraAtual.palestrante)}
           </p>
-  
-          <!-- SONAR LINE -->
+
           <div class="w-full h-[3px] sonar-line mb-10"></div>
-  
-          <!-- Autor -->
+
           <div class="flex items-center gap-4 mb-6">
             <span class="text-4xl">${avatarEmoji}</span>
             <span class="text-2xl text-gray-200 opacity-90">
               ${nomeAutor} perguntou:
             </span>
           </div>
-  
-          <!-- Pergunta -->
+
           <div class="max-w-3xl mx-auto">
             <p class="text-5xl leading-snug text-white font-semibold drop-shadow-xl break-words">
               ${esc(pergunta.pergunta)}
             </p>
           </div>
-  
+
         </div>
-  
+
       </div>
     `;
   } else {
 
-    // 🔥 NOVO: buscar total de perguntas no Supabase
+    // Buscar total de perguntas para o contador
     const { data: listaPerguntas } = await supabase
-    .from('cnv_perguntas')
-    .select('id')
-    .eq('palestra_id', palestraAtual.id)
-    .eq('deletada', false);
+      .from('cnv_perguntas')
+      .select('id')
+      .eq('palestra_id', palestraAtual.id)
+      .eq('deletada', false);
   
-  const totalPerguntas = listaPerguntas?.length || 0;
+    const totalPerguntas = listaPerguntas?.length || 0;
   
-  container.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-full text-center">
-  
-      <h1 class="text-7xl font-extrabold mb-4 ocean-text glow-tertiary">
-        ${esc(palestraAtual.nome)}
-      </h1>
-  
-      <p class="text-3xl text-gray-200 opacity-80 mb-6">
-        ${esc(palestraAtual.palestrante)}
-      </p>
-  
-      <div class="w-64 h-[3px] sonar-line mb-10"></div>
-  
-      <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-10 py-6 shadow-lg mb-8">
-  
-        ${
-          sessao.perguntas_abertas
-            ? `
-              <p class="text-5xl font-bold text-green-300">
-                Perguntas Abertas
-              </p>
-              <p class="text-xl text-gray-200 opacity-70 mt-4">
-                Envie sua pergunta pelo celular
-              </p>
-            `
-            : `
-              <p class="text-5xl font-bold text-red-300">
-                Perguntas Fechadas
-              </p>
-              <p class="text-xl text-gray-300 opacity-70 mt-4">
-                Perguntas encerradas
-              </p>
-            `
-        }
-  
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center h-full text-center select-none">
+    
+        <h1 class="text-7xl font-extrabold mb-4 ocean-text glow-tertiary">
+          ${esc(palestraAtual.nome)}
+        </h1>
+    
+        <p class="text-3xl text-gray-200 opacity-80 mb-6">
+          ${esc(palestraAtual.palestrante)}
+        </p>
+    
+        <div class="w-64 h-[3px] sonar-line mb-10"></div>
+    
+        <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-10 py-6 shadow-lg mb-8">
+    
+          ${
+            sessao.perguntas_abertas
+              ? `
+                <p class="text-5xl font-bold text-green-300">
+                  Perguntas Abertas
+                </p>
+                <p class="text-xl text-gray-200 opacity-70 mt-4">
+                  Envie sua pergunta pelo celular
+                </p>
+              `
+              : `
+                <p class="text-5xl font-bold text-red-300">
+                  Perguntas Fechadas
+                </p>
+                <p class="text-xl text-gray-300 opacity-70 mt-4">
+                  Perguntas encerradas
+                </p>
+              `
+          }
+    
+        </div>
+    
+        <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
+          📬 ${totalPerguntas} perguntas recebidas
+        </div>
+    
       </div>
-  
-      <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
-        📬 ${totalPerguntas} perguntas recebidas
-      </div>
-  
-    </div>
-  `;
+    `;
   }
 }
 
@@ -451,7 +301,6 @@ async function renderizarEnquetes() {
       p_enquete_id: enqueteAtual.id
     });
 
-    // Mapa texto -> { votos, percentual }
     const mapaResultado = new Map();
     (resultado || []).forEach(r => {
       mapaResultado.set(r.texto, {
@@ -460,7 +309,6 @@ async function renderizarEnquetes() {
       });
     });
 
-    // Montar lista de opções preservando ORDEM ORIGINAL
     const itens = opcoes.map((texto, index) => {
       const dados = mapaResultado.get(texto) || { votos: 0, percentual: 0 };
       return {
@@ -473,7 +321,6 @@ async function renderizarEnquetes() {
 
     const totalVotos = itens.reduce((sum, item) => sum + item.votos, 0);
 
-    // Descobrir índice da vencedora (maior número de votos; em empate, primeira)
     let indiceVencedora = 0;
     for (let i = 1; i < itens.length; i++) {
       if (itens[i].votos > itens[indiceVencedora].votos) {
@@ -481,18 +328,36 @@ async function renderizarEnquetes() {
       }
     }
 
+    // Caso sem votos
+    if (!itens.length || totalVotos === 0) {
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-center select-none">
+
+          <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
+            ${esc(enqueteAtual.nome)}
+          </h2>
+
+          <div class="w-64 h-[3px] sonar-line mb-10"></div>
+
+          <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl px-12 py-10 shadow-lg max-w-3xl">
+            <p class="text-4xl text-gray-200 mb-4">Nenhum voto registrado.</p>
+            <p class="text-2xl text-gray-300 opacity-80">Aguarde os participantes votarem.</p>
+          </div>
+
+        </div>
+      `;
+      return;
+    }
+
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full text-center select-none px-8">
 
-        <!-- TÍTULO ENQUETE -->
         <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
           ${esc(enqueteAtual.nome)}
         </h2>
 
-        <!-- LINHA SONAR -->
         <div class="w-64 h-[3px] sonar-line mb-10"></div>
 
-        <!-- GRID DE OPÇÕES (todas, na ordem, com destaque na vencedora) -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-6xl w-full mx-auto mb-10">
           ${itens.map((item, idx) => {
             const ehVencedora = totalVotos > 0 && idx === indiceVencedora;
@@ -537,6 +402,63 @@ async function renderizarEnquetes() {
     `;
     return;
   }
+
+  // =====================================================================
+  // MODO: VOTAÇÃO ABERTA / FECHADA (SEM OPÇÕES)
+  // =====================================================================
+
+  const { data: resultadoContagem } = await supabase.rpc('cnv_resultado_enquete', {
+    p_enquete_id: enqueteAtual.id
+  });
+
+  const totalVotosContagem = (resultadoContagem || []).reduce(
+    (sum, r) => sum + parseInt(r.total_votos || 0, 10),
+    0
+  );
+
+  const votacaoAberta = !!sessao.enquete_votacao_aberta;
+
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center h-full text-center select-none px-8">
+
+      <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
+        ${esc(enqueteAtual.nome)}
+      </h2>
+
+      <div class="w-64 h-[3px] sonar-line mb-10"></div>
+
+      <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl px-12 py-10 shadow-lg max-w-4xl w-full mb-8">
+
+        <p class="text-4xl mb-4 text-gray-100 flex items-center justify-center gap-3">
+          <span>📊</span>
+          <span class="font-extrabold">
+            Enquete ${votacaoAberta ? 'Aberta' : 'Fechada'}
+          </span>
+        </p>
+
+        ${
+          votacaoAberta
+            ? `
+              <p class="text-2xl text-gray-200 opacity-80">
+                Vote pelo seu celular
+              </p>
+            `
+            : `
+              <p class="text-2xl text-gray-300 opacity-80">
+                Votação encerrada
+              </p>
+            `
+        }
+
+      </div>
+
+      <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
+        🗳️ ${totalVotosContagem} voto${totalVotosContagem === 1 ? '' : 's'} recebido${totalVotosContagem === 1 ? '' : 's'}
+      </div>
+
+    </div>
+  `;
+}
 
 // ============================================
 // MODO: QUIZ
