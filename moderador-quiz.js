@@ -141,9 +141,60 @@ function renderizarControleQuiz() {
   
   // Lista de perguntas
   renderizarListaPerguntasQuiz();
+
+  // Participantes
+  carregarParticipantesQuiz();
   
   // Ranking
   carregarRankingQuiz();
+}
+
+async function carregarParticipantesQuiz() {
+  const participantesDiv = document.getElementById('controleParticipantesQuiz');
+  if (!participantesDiv || !quizAtual) return;
+
+  const { data, error } = await supabase
+    .from('cnv_quiz_participantes')
+    .select('*')
+    .eq('quiz_id', quizAtual.id)
+    .order('cadastrado_em', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao carregar participantes do quiz:', error);
+    participantesDiv.innerHTML = `
+      <div class="p-3 border rounded bg-white">
+        <p class="text-sm text-red-600">Erro ao carregar participantes.</p>
+      </div>
+    `;
+    return;
+  }
+
+  participantesQuiz = data || [];
+
+  if (participantesQuiz.length === 0) {
+    participantesDiv.innerHTML = `
+      <div class="p-3 border rounded bg-white">
+        <p class="text-sm text-gray-500">Nenhum participante cadastrado ainda.</p>
+      </div>
+    `;
+    return;
+  }
+
+  participantesDiv.innerHTML = `
+    <div class="p-3 border rounded bg-white">
+      <div class="flex justify-between items-center mb-2">
+        <h4 class="font-semibold text-sm">Participantes (${participantesQuiz.length})</h4>
+        <span class="text-xs text-gray-500">Atualiza em tempo real</span>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        ${participantesQuiz.map(p => `
+          <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+            ${esc(p.nome || 'Sem nome')}
+          </span>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
 function renderizarListaPerguntasQuiz() {
