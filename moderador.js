@@ -227,8 +227,24 @@ async function conectarRealtime() {
       agendarAtualizarResultadoEnquete();
     })
     .subscribe();
+
+  canalQuizParticipantes = supabase
+    .channel('moderador_quiz_participantes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'cnv_quiz_participantes'
+    }, (payload) => {
+      const registro = payload.new || payload.old;
+      if (!quizAtual || !registro || registro.quiz_id !== quizAtual.id) return;
+      console.log('👥 Participantes do quiz mudaram:', payload.eventType);
+      if (typeof carregarParticipantesQuiz === 'function') {
+        carregarParticipantesQuiz();
+      }
+    })
+    .subscribe();
   
-  console.log('✅ Realtime conectado (sessão + enquete)');
+  console.log('✅ Realtime conectado (sessão + enquete + participantes)');
 }
 
 // ============================================
