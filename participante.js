@@ -431,7 +431,8 @@ function iniciarCountdownBloqueioPergunta(motivoOriginal) {
     );
 
     el.textContent = `⚠️ ${texto}`;
-    tempo--;
+    const agora = Date.now();
+    tempo = tempoLimite - Math.floor((agora - inicio) / 1000);
   };
 
   // Atualiza imediatamente e depois a cada 1s
@@ -1063,8 +1064,9 @@ async function renderizarQuizPergunta() {
   // Mostrar opções
   const tempoLimite = perguntaQuizAtual.tempo_limite_seg;
 
-  // Guarda o início da contagem em window para usar no cálculo da pontuação
-  window.inicioContagem = Date.now();
+  // Usar o horário REAL enviado pelo moderador
+  const inicio = new Date(sessao.metadata?.pergunta_inicio).getTime();
+  window.inicioContagem = inicio ?? Date.now();
   
   container.innerHTML = `
     <div class="h-full flex flex-col justify-between animate-fadein">
@@ -1123,7 +1125,8 @@ async function renderizarQuizPergunta() {
   // Countdown visual
   let tempo = tempoLimite;  
   const intervalo = setInterval(() => {
-    tempo--;
+    const agora = Date.now();
+    tempo = tempoLimite - Math.floor((agora - inicio) / 1000);
     const el = document.getElementById('tempoRestante');
     const barra = document.getElementById('barraProgresso');
     
