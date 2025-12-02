@@ -127,6 +127,16 @@ function renderizarControleQuiz() {
         <button onclick="toggleRankingTelao()" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
           ${sessaoAtual.quiz_mostrar_ranking ? '🙈 Ocultar' : '📊 Mostrar'} Ranking
         </button>
+
+        <button onclick="toggleRankingFake()" 
+          class="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700">
+          🎭 Ranking Fake
+        </button>
+        
+        <button onclick="dispararRankingIndividual()" 
+          class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">
+          👤 Ranking Individual
+        </button>
         
         <button onclick="abrirModalGerenciarQuiz(quizAtual)" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
           ⚙️ Gerenciar Perguntas
@@ -537,6 +547,32 @@ async function carregarRankingQuiz() {
     </div>
   `;
 }
+
+async function toggleRankingFake() {
+  const novoValor = !sessaoAtual.quiz_mostrar_ranking_fake;
+
+  const { error } = await supabase
+    .from('cnv_sessao')
+    .update({
+      quiz_mostrar_ranking_fake: novoValor,
+      quiz_estado: novoValor ? 'ranking_fake' : 'aguardando_inicio'
+    })
+    .eq('id', 1);
+
+  if (error) console.error(error);
+}
+
+async function dispararRankingIndividual() {
+  await supabase
+    .from('cnv_sessao')
+    .update({
+      metadata: { refresh_token: crypto.randomUUID() }
+    })
+    .eq('id', 1);
+
+  // O participante escuta refresh_token → e troca pra tela de ranking pessoal
+}
+
 // ============================================
 // QUIZ: GERENCIAR nome quiz
 // ============================================
