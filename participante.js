@@ -454,6 +454,37 @@ async function verificarPodePerguntar() {
   return data;
 }
 
+function mostrarConfirmacaoPergunta() {
+  const container = document.getElementById('participanteContainer');
+
+  container.innerHTML = `
+    <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+      <div></div>
+
+      <div class="flex flex-col items-center gap-6 animate-slideup">
+        <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                    bg-green-100 backdrop-blur-md shadow-xl">
+          <span class="text-6xl">📤</span>
+        </div>
+
+        <h2 class="text-3xl font-extrabold text-green-700 drop-shadow-sm">
+          Pergunta enviada!
+        </h2>
+
+        <p class="text-md text-gray-700 max-w-sm">
+          Sua pergunta foi registrada e enviada ao moderador.
+        </p>
+      </div>
+
+      <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+        Você poderá enviar outra pergunta após o intervalo permitido.
+      </p>
+
+    </div>
+  `;
+}
+
 async function enviarPergunta(event) {
   event.preventDefault();
   
@@ -480,7 +511,7 @@ async function enviarPergunta(event) {
     
     if (error) throw error;
 
-    await renderizar();
+    mostrarConfirmacaoPergunta();
     
   } catch (error) {
     console.error('Erro ao enviar pergunta:', error);
