@@ -263,7 +263,7 @@ function iniciarRotacaoFrases() {
         elemento.classList.remove("fade-in");
       }, 900);
     }, 900);
-  }, 6000); // tempo total de troca (6s)
+  }, 11000); // tempo total de troca (11s)
 }
 
 
