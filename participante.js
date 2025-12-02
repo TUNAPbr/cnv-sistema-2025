@@ -740,6 +740,9 @@ async function renderizarQuizPergunta() {
   
   // Mostrar opções
   const tempoLimite = perguntaQuizAtual.tempo_limite_seg;
+
+  // Guarda o início da contagem em window para usar no cálculo da pontuação
+  window.inicioContagem = Date.now();
   
   container.innerHTML = `
     <div>
@@ -774,9 +777,7 @@ async function renderizarQuizPergunta() {
   `;
   
   // Countdown visual
-  let tempo = tempoLimite;
-  const inicio = Date.now();
-  
+  let tempo = tempoLimite;  
   const intervalo = setInterval(() => {
     tempo--;
     const el = document.getElementById('tempoRestante');
