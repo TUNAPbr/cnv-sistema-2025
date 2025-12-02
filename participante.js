@@ -1348,42 +1348,6 @@ async function mostrarFeedbackQuiz() {
   }
 }
 
-async function mostrarFeedbackQuiz() {
-  const container = document.getElementById('participanteContainer');
-  
-  if (!minhaResposta) {
-    container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">❌</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Você não respondeu</h2>
-        <p class="text-gray-600">Resposta correta: ${perguntaQuizAtual.resposta_correta}</p>
-      </div>
-    `;
-    return;
-  }
-  
-  if (minhaResposta.correta) {
-    container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-[8rem] mb-4">🎉</div>
-        <h2 class="text-3xl font-bold text-green-600 mb-4">VOCÊ ACERTOU!</h2>
-        <div class="text-5xl font-bold text-yellow-500 mb-2">+${minhaResposta.pontos}</div>
-        <p class="text-xl text-gray-600">pontos</p>
-        <p class="text-gray-500 mt-4">Resposta: ${perguntaQuizAtual.resposta_correta}</p>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">😕</div>
-        <h2 class="text-2xl font-bold text-red-600 mb-4">Você errou</h2>
-        <p class="text-xl text-gray-700 mb-2">Você escolheu: <strong>${minhaResposta.resposta_escolhida}</strong></p>
-        <p class="text-xl text-green-600">Resposta correta: <strong>${perguntaQuizAtual.resposta_correta}</strong></p>
-      </div>
-    `;
-  }
-}
-
 // ============================================
 // UTILITÁRIOS
 // ============================================
