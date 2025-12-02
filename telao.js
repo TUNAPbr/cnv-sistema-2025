@@ -27,6 +27,8 @@ const frasesMotivacionais = [
   "A maré da meta virou: hora de navegar forte e buscar o seu melhor trimestre."
 ];
 
+
+
 // ============================================
 // UTILITÁRIO: NORMALIZAR OPÇÕES DE ENQUETE
 // ============================================
@@ -240,6 +242,35 @@ function renderizarAguardando() {
   iniciarRotacaoFrases();
 }
 
+let indiceFrase = 0;
+let intervaloFrases = null;
+
+function iniciarRotacaoFrases() {
+  const elemento = document.getElementById("fraseMotivacional");
+  if (!elemento) return;
+
+  // evita múltiplos timers
+  if (intervaloFrases) clearInterval(intervaloFrases);
+
+  // define primeira frase imediatamente
+  elemento.textContent = frasesMotivacionais[indiceFrase];
+
+  intervaloFrases = setInterval(() => {
+    indiceFrase = (indiceFrase + 1) % frasesMotivacionais.length;
+
+    elemento.classList.add("fade-out");
+
+    setTimeout(() => {
+      elemento.textContent = frasesMotivacionais[indiceFrase];
+      elemento.classList.remove("fade-out");
+      elemento.classList.add("fade-in");
+
+      setTimeout(() => {
+        elemento.classList.remove("fade-in");
+      }, 900);
+    }, 900);
+  }, 6000); // tempo total de troca (6s)
+}
 
 
 // ============================================
