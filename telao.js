@@ -3,6 +3,30 @@
 // Tela de Projeção (Read-Only)
 // ============================================
 
+
+const frasesMotivacionais = [
+  "No mar de oportunidades, quem navega com foco fecha mais negócios.",
+  "Venda é como maré: quando sobe, só surfa quem estava pronto.",
+  "Quem não lança a rede, perde o peixe — e o cliente.",
+  "Reme forte: a meta não se alcança ancorado.",
+  "O mar está cheio de oportunidades… falta só você mergulhar.",
+  "Vendedor que navega com estratégia transforma onda em faturamento.",
+  "Em águas turbulentas, os melhores vendedores mostram o leme firme.",
+  "Pare de esperar vento a favor. Seja o vento e acelere suas vendas.",
+  "Cliente é como farol: ilumina o caminho de quem sabe ouvir.",
+  "Onde muitos veem tempestade, o vendedor preparado vê terreno fértil para navegar.",
+  "Meta não é miragem: é porto seguro para quem rema todos os dias.",
+  "Bússola do sucesso? Persistência, técnica e follow-up.",
+  "No mar das objeções, quem domina as ondas fecha com confiança.",
+  "Vendedor que navega com propósito nunca fica à deriva.",
+  "Oportunidade boa é como boa onda: passa… ou você surfa.",
+  "Cada ligação é um mergulho; cada fechamento, uma nova costa conquistada.",
+  "Seja capitão da sua performance: conduza, não deixe a maré conduzir você.",
+  "Quem domina o mapa das necessidades do cliente sempre chega primeiro ao porto.",
+  "Onde outros veem ressaca, o vendedor visionário vê chance de pescar grande.",
+  "A maré da meta virou: hora de navegar forte e buscar o seu melhor trimestre."
+];
+
 // ============================================
 // UTILITÁRIO: NORMALIZAR OPÇÕES DE ENQUETE
 // ============================================
@@ -191,15 +215,32 @@ function renderizarAguardando() {
   const container = document.getElementById('telaoContainer');
   
   container.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-full breathe">
-      <h1 class="text-8xl font-bold mb-8 ocean-text">${esc(config?.nome_evento || 'CNV 2025')}</h1>
-      <div class="glow-tertiary text-5xl font-bold mb-4">
-        🌊 Mar de Oportunidades
+    <div class="relative flex flex-col items-center justify-center h-full breathe overflow-hidden">
+    
+      <div class="pointer-events-none absolute inset-0">
+        <span class="marine-emoji marine-emoji-1">🐬</span>
+        <span class="marine-emoji marine-emoji-2">🐟</span>
+        <span class="marine-emoji marine-emoji-3">🌊</span>
       </div>
-      <p class="text-4xl text-gray-200 ocean-text mt-8">Aguardando próxima atividade...</p>
+
+      <div class="relative text-center">
+        <h1 class="text-8xl font-bold mb-6 ocean-text">
+          ${esc(config?.nome_evento || 'CNV 2025')}
+        </h1>
+
+        <div class="glow-tertiary text-5xl font-extrabold mb-4 animate-motivational">
+          🌊 Mar de Oportunidades
+        </div>
+
+        <p id="fraseMotivacional" class="text-3xl text-gray-100 mt-6 motivational-subtitle"></p>
+      </div>
     </div>
   `;
+
+  iniciarRotacaoFrases();
 }
+
+
 
 // ============================================
 // MODO: PERGUNTAS
