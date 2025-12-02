@@ -575,6 +575,7 @@ async function renderizarQuiz() {
   } else {
     renderizarQuizAguardando();
   }
+}
 
 async function verificarCadastroQuiz() {
   const { data } = await supabase
