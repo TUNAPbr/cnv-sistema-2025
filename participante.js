@@ -829,7 +829,7 @@ async function responderQuiz(opcao) {
         quiz_pergunta_id: perguntaQuizAtual.id,
         device_id: deviceId,
         resposta_escolhida: opcao,
-        tempo_resposta: tempoResposta,
+        tempo_resposta_seg: tempoResposta,
         correta: correta,
         pontos: pontos
       });
