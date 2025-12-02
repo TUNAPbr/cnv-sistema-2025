@@ -780,15 +780,31 @@ function renderizarQuizCadastro() {
   const container = document.getElementById('participanteContainer');
   
   container.innerHTML = `
-    <div>
-      <div class="text-center mb-6">
-        <div class="text-6xl mb-4">🎮</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">${esc(quizAtual.nome)}</h2>
-        <p class="text-gray-600">Cadastre-se para participar!</p>
+    <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+      <div></div>
+
+      <div class="flex flex-col items-center gap-6 animate-slideup">
+        <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                    bg-white/20 backdrop-blur-md shadow-xl animate-pulse-slow">
+          <span class="text-6xl">🎮</span>
+        </div>
+
+        <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+          Entrar no Quiz
+        </h2>
+
+        <p class="text-md text-gray-700 -mt-2">
+          ${esc(quizAtual.nome)}
+        </p>
+
+        <p class="text-sm text-gray-600">
+          Cadastre seu nome para participar da próxima rodada.
+        </p>
       </div>
       
-      <form id="formCadastroQuiz" onsubmit="cadastrarNoQuiz(event)" class="space-y-4">
-        <div>
+      <form id="formCadastroQuiz" onsubmit="cadastrarNoQuiz(event)" class="w-full max-w-md mx-auto space-y-4 animate-fadein-slow">
+        <div class="text-left">
           <label class="block text-sm font-bold mb-2">Seu nome *</label>
           <input type="text" id="nomeQuiz" required maxlength="20"
                  class="w-full p-3 border rounded-lg text-lg" 
@@ -796,9 +812,12 @@ function renderizarQuizCadastro() {
           <p class="text-xs text-gray-500 mt-1">Máximo 20 caracteres</p>
         </div>
         
-        <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition">
+        <button type="submit" 
+                class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition">
           ✅ Entrar no Quiz
         </button>
+
+        <p id="statusCadastroQuiz" class="text-xs text-gray-600 text-center mt-2"></p>
       </form>
     </div>
   `;
@@ -807,11 +826,25 @@ function renderizarQuizCadastro() {
 async function cadastrarNoQuiz(event) {
   event.preventDefault();
   
-  const nome = document.getElementById('nomeQuiz').value.trim();
+  const nomeInput = document.getElementById('nomeQuiz');
+  const statusEl = document.getElementById('statusCadastroQuiz');
+  const nome = nomeInput.value.trim();
   
   if (!nome) {
-    alert('Digite seu nome');
+    if (statusEl) statusEl.textContent = 'Digite seu nome para entrar no quiz.';
     return;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = 'Enviando seu cadastro...';
+  }
+  
+  // desabilita botão enquanto envia
+  const form = document.getElementById('formCadastroQuiz');
+  const btn = form?.querySelector('button[type="submit"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('opacity-70', 'cursor-not-allowed');
   }
   
   try {
@@ -825,19 +858,27 @@ async function cadastrarNoQuiz(event) {
     
     if (error) throw error;
     
-    alert('✅ Cadastro realizado! Aguarde o início...');
+    if (statusEl) {
+      statusEl.textContent = '';
+    }
+    
     await renderizar();
     
   } catch (error) {
     console.error('Erro ao cadastrar:', error);
     
-    if (error.code === '23505') {
-      alert('⚠️ Você já está cadastrado');
-    } else {
-      alert('❌ Erro ao cadastrar');
+    if (statusEl) {
+      if (error.code === '23505') {
+        statusEl.textContent = 'Você já está cadastrado neste quiz.';
+      } else {
+        statusEl.textContent = 'Erro ao cadastrar. Tente novamente em instantes.';
+      }
     }
     
-    await renderizar();
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-70', 'cursor-not-allowed');
+    }
   }
 }
 
@@ -845,10 +886,29 @@ function renderizarQuizNaoCadastrado() {
   const container = document.getElementById('participanteContainer');
   
   container.innerHTML = `
-    <div class="text-center py-12">
-      <div class="text-6xl mb-4">🔒</div>
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">Cadastro Encerrado</h2>
-      <p class="text-gray-600">Você não pode participar deste quiz</p>
+    <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+      
+      <div></div>
+
+      <div class="flex flex-col items-center gap-6 animate-slideup">
+        <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                    bg-white/20 backdrop-blur-md shadow-xl">
+          <span class="text-6xl">🔒</span>
+        </div>
+
+        <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+          Cadastro Encerrado
+        </h2>
+
+        <p class="text-md text-gray-700 max-w-sm">
+          Você não pode participar deste quiz, pois o período de cadastro já foi encerrado.
+        </p>
+      </div>
+
+      <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+        Acompanhe pelo telão e pelas próximas interações.
+      </p>
+
     </div>
   `;
 }
@@ -857,10 +917,29 @@ function renderizarQuizAguardando() {
   const container = document.getElementById('participanteContainer');
   
   container.innerHTML = `
-    <div class="text-center py-12">
-      <div class="text-6xl mb-4">🎮</div>
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">Você está participando!</h2>
-      <p class="text-gray-600">Aguarde a primeira pergunta...</p>
+    <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+      
+      <div></div>
+
+      <div class="flex flex-col items-center gap-6 animate-slideup">
+        <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                    bg-white/20 backdrop-blur-md shadow-xl animate-pulse-slow">
+          <span class="text-6xl">🎮</span>
+        </div>
+
+        <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+          Você está participando!
+        </h2>
+
+        <p class="text-md text-gray-700 max-w-sm">
+          Aguarde o moderador iniciar a próxima pergunta.
+        </p>
+      </div>
+
+      <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+        Fique atento ao seu celular, o tempo para responder será limitado. ⏱️
+      </p>
+
     </div>
   `;
 }
@@ -872,9 +951,27 @@ function renderizarQuizCountdown() {
   
   const atualizar = () => {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-[10rem] font-bold leading-none">${contador}</div>
-        <p class="text-2xl mt-4">Prepare-se!</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+        
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-32 h-32 flex items-center justify-center rounded-full 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <div class="text-[5rem] font-extrabold leading-none">
+              ${contador >= 0 ? contador : 0}
+            </div>
+          </div>
+
+          <h2 class="text-2xl font-extrabold text-gray-800 drop-shadow-sm">
+            Prepare-se para responder!
+          </h2>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          A pergunta será exibida em instantes.
+        </p>
+
       </div>
     `;
     
@@ -911,7 +1008,7 @@ async function renderizarQuizPergunta() {
     .select('*')
     .eq('quiz_pergunta_id', perguntaQuizAtual.id)
     .eq('device_id', deviceId)
-    .maybeSingle(); // 👈 evita 406 quando não tem resposta
+    .maybeSingle();
 
   if (error) {
     console.error('Erro ao buscar resposta do quiz:', error);
@@ -919,13 +1016,32 @@ async function renderizarQuizPergunta() {
   
   minhaResposta = resposta;
 
-  
+  // Se já respondeu, mostra tela de “Resposta enviada”
   if (resposta) {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">✅</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Resposta enviada!</h2>
-        <p class="text-gray-600">Aguarde a revelação...</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">✅</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Resposta enviada!
+          </h2>
+
+          <p class="text-md text-gray-700 max-w-sm">
+            Aguarde a revelação da resposta correta.
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Sua pontuação será calculada com base no tempo de resposta. ⏱️
+        </p>
+
       </div>
     `;
     return;
@@ -938,33 +1054,55 @@ async function renderizarQuizPergunta() {
   window.inicioContagem = Date.now();
   
   container.innerHTML = `
-    <div>
-      <div class="text-center mb-4">
-        <h3 class="text-xl font-bold text-gray-800">Pergunta ${perguntaQuizAtual.ordem}</h3>
-        <div id="tempoRestante" class="text-4xl font-bold text-red-600 mt-2">${tempoLimite}s</div>
-      </div>
+    <div class="h-full flex flex-col justify-between animate-fadein">
       
-      <div class="mb-4 bg-gray-100 rounded-full h-3">
-        <div id="barraProgresso" class="bg-blue-600 h-3 rounded-full transition-all" style="width: 100%"></div>
+      <div></div>
+
+      <div class="space-y-6 animate-slideup">
+        
+        <div class="flex flex-col items-center gap-4 text-center">
+          <div class="w-20 h-20 flex items-center justify-center rounded-2xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-4xl">❓</span>
+          </div>
+
+          <h3 class="text-xl font-extrabold text-gray-800 drop-shadow-sm">
+            Pergunta ${perguntaQuizAtual.ordem}
+          </h3>
+
+          <div class="flex flex-col items-center gap-2">
+            <div id="tempoRestante" class="text-3xl font-bold text-red-600">${tempoLimite}s</div>
+            <div class="w-full bg-gray-100 rounded-full h-3 max-w-md">
+              <div id="barraProgresso" class="bg-blue-600 h-3 rounded-full transition-all" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="space-y-3">
+          <button onclick="responderQuiz('A')" id="btnA"
+                  class="w-full p-4 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition btn-opcao">
+            A) ${esc(perguntaQuizAtual.opcao_a)}
+          </button>
+          <button onclick="responderQuiz('B')" id="btnB"
+                  class="w-full p-4 bg-green-500 text-white rounded-lg font-bold text-lg hover:bg-green-600 transition btn-opcao">
+            B) ${esc(perguntaQuizAtual.opcao_b)}
+          </button>
+          <button onclick="responderQuiz('C')" id="btnC"
+                  class="w-full p-4 bg-orange-500 text-white rounded-lg font-bold text-lg hover:bg-orange-600 transition btn-opcao">
+            C) ${esc(perguntaQuizAtual.opcao_c)}
+          </button>
+          <button onclick="responderQuiz('D')" id="btnD"
+                  class="w-full p-4 bg-purple-500 text-white rounded-lg font-bold text-lg hover:bg-purple-600 transition btn-opcao">
+            D) ${esc(perguntaQuizAtual.opcao_d)}
+          </button>
+        </div>
       </div>
-      
-      <div class="space-y-3">
-        <button onclick="responderQuiz('A')" id="btnA"
-                class="w-full p-4 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition btn-opcao">
-          A) ${esc(perguntaQuizAtual.opcao_a)}
-        </button>
-        <button onclick="responderQuiz('B')" id="btnB"
-                class="w-full p-4 bg-green-500 text-white rounded-lg font-bold text-lg hover:bg-green-600 transition btn-opcao">
-          B) ${esc(perguntaQuizAtual.opcao_b)}
-        </button>
-        <button onclick="responderQuiz('C')" id="btnC"
-                class="w-full p-4 bg-orange-500 text-white rounded-lg font-bold text-lg hover:bg-orange-600 transition btn-opcao">
-          C) ${esc(perguntaQuizAtual.opcao_c)}
-        </button>
-        <button onclick="responderQuiz('D')" id="btnD"
-                class="w-full p-4 bg-purple-500 text-white rounded-lg font-bold text-lg hover:bg-purple-600 transition btn-opcao">
-          D) ${esc(perguntaQuizAtual.opcao_d)}
-        </button>
+
+      <div class="mt-6 text-center animate-fadein-slow">
+        <p class="text-xs text-gray-500">
+          Toque apenas uma vez. Sua resposta será enviada imediatamente.
+        </p>
+        <p id="statusQuizMensagem" class="text-xs text-gray-600 mt-2"></p>
       </div>
     </div>
   `;
@@ -991,10 +1129,19 @@ async function renderizarQuizPergunta() {
 async function responderQuiz(opcao) {
   const tempoResposta = Math.floor((Date.now() - (window.inicioContagem || Date.now())) / 1000);
   
+  const statusEl = document.getElementById('statusQuizMensagem');
+
+  if (statusEl) {
+    statusEl.textContent = 'Enviando sua resposta...';
+  }
+
   // Desabilitar botões
   ['A', 'B', 'C', 'D'].forEach(letra => {
     const btn = document.getElementById(`btn${letra}`);
-    if (btn) btn.disabled = true;
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('opacity-70', 'cursor-not-allowed');
+    }
   });
   
   // Destacar escolha
@@ -1022,32 +1169,110 @@ async function responderQuiz(opcao) {
     
     minhaResposta = { resposta_escolhida: opcao, correta, pontos };
     
-    alert('✅ Resposta registrada!');
+    if (statusEl) {
+      statusEl.textContent = '';
+    }
+
     await renderizar();
     
   } catch (error) {
     console.error('Erro ao responder:', error);
-    alert('❌ Erro ao enviar resposta');
+    
+    if (statusEl) {
+      statusEl.textContent = 'Erro ao enviar resposta. Tente novamente na próxima pergunta.';
+    }
+
+    // Reabilita botões em caso de erro
+    ['A', 'B', 'C', 'D'].forEach(letra => {
+      const btn = document.getElementById(`btn${letra}`);
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
+    });
   }
 }
 
-function renderizarQuizTempoEsgotado() {
+async function mostrarFeedbackQuiz() {
   const container = document.getElementById('participanteContainer');
   
-  if (minhaResposta) {
+  if (!minhaResposta) {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">✅</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Você respondeu!</h2>
-        <p class="text-gray-600">Aguarde a revelação...</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">❌</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Você não respondeu
+          </h2>
+
+          <p class="text-md text-gray-700 max-w-sm">
+            A resposta correta era: <strong>${perguntaQuizAtual.resposta_correta}</strong>
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Fique atento às próximas perguntas para somar pontos.
+        </p>
+
+      </div>
+    `;
+    return;
+  }
+  
+  if (minhaResposta.correta) {
+    container.innerHTML = `
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+        
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="text-[6rem] mb-2">🎉</div>
+          <h2 class="text-3xl font-extrabold text-green-600 drop-shadow-sm">
+            VOCÊ ACERTOU!
+          </h2>
+          <div class="text-5xl font-bold text-yellow-500 mb-2">+${minhaResposta.pontos}</div>
+          <p class="text-lg text-gray-700">pontos nesta pergunta</p>
+          <p class="text-md text-gray-600 mt-2">
+            Resposta correta: <strong>${perguntaQuizAtual.resposta_correta}</strong>
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Continue assim para subir no ranking! 🏆
+        </p>
+
       </div>
     `;
   } else {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">⏰</div>
-        <h2 class="text-2xl font-bold text-red-600 mb-2">TEMPO ESGOTADO!</h2>
-        <p class="text-gray-600">Você não respondeu a tempo</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+        
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="text-[5rem] mb-2">😕</div>
+          <h2 class="text-3xl font-extrabold text-red-600 drop-shadow-sm">
+            Você errou
+          </h2>
+          <p class="text-lg text-gray-700">
+            Você escolheu: <strong>${minhaResposta.resposta_escolhida}</strong>
+          </p>
+          <p class="text-lg text-green-600">
+            Resposta correta: <strong>${perguntaQuizAtual.resposta_correta}</strong>
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Não desanima! A próxima pode te colocar no topo do ranking. 💪
+        </p>
+
       </div>
     `;
   }
