@@ -454,7 +454,7 @@ async function verificarPodePerguntar() {
   return data;
 }
 
-function mostrarConfirmacaoPergunta() {
+function mostrarConfirmacaoPergunta(tempoRestante = null) {
   const container = document.getElementById('participanteContainer');
 
   container.innerHTML = `
@@ -475,14 +475,53 @@ function mostrarConfirmacaoPergunta() {
         <p class="text-md text-gray-700 max-w-sm">
           Sua pergunta foi registrada e enviada ao moderador.
         </p>
+
+        ${
+          tempoRestante !== null
+            ? `<p id="countdownPergunta" class="text-lg text-gray-700 font-semibold mt-4">
+                 Você poderá enviar outra pergunta em ${tempoRestante}s
+               </p>`
+            : ""
+        }
       </div>
 
       <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
-        Você poderá enviar outra pergunta após o intervalo permitido.
+        Aguarde um instante...
       </p>
 
     </div>
   `;
+
+  if (tempoRestante !== null) iniciarCountdownConfirmacao(tempoRestante);
+}
+function iniciarCountdownConfirmacao(tempoInicial) {
+  let tempo = tempoInicial;
+
+  const intervalo = setInterval(async () => {
+    tempo--;
+
+    const el = document.getElementById('countdownPergunta');
+    if (el) {
+      el.textContent = `Você poderá enviar outra pergunta em ${tempo}s`;
+    }
+
+    // quando zerar:
+    if (tempo <= 0) {
+      clearInterval(intervalo);
+
+      // recarrega sessão e validação
+      await carregarSessao();         
+      const validacao = await verificarPodePerguntar();
+
+      if (validacao.pode) {
+        // volta para o formulário
+        renderizarPerguntas();
+      } else {
+        // volta para a tela normal de bloqueio (com countdown)
+        renderizarPerguntas();
+      }
+    }
+  }, 1000);
 }
 
 async function enviarPergunta(event) {
@@ -511,13 +550,22 @@ async function enviarPergunta(event) {
     
     if (error) throw error;
 
-    mostrarConfirmacaoPergunta();
-    
+    // NOVO TRECHO ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
+    const validacao = await verificarPodePerguntar();
+
+    let tempo = null;
+    const match = validacao?.motivo?.match(/(\d+)\s*segundo/);
+    if (match) tempo = parseInt(match[1], 10);
+
+    mostrarConfirmacaoPergunta(tempo);
+    // NOVO TRECHO ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆
+
   } catch (error) {
     console.error('Erro ao enviar pergunta:', error);
     alert('❌ Erro ao enviar pergunta');
   }
 }
+
 
 // ============================================
 // MODO: ENQUETES
