@@ -441,114 +441,164 @@ async function renderizarEnquetes() {
     return;
   }
 
-  // =========================================================
-  // MODO: MOSTRAR RESULTADO (com borda premium + grid dinâmico)
-  // =========================================================
+  const opcoes = normalizarOpcoesEnquete(enqueteAtual.opcoes || []);
+
+  // =====================================================================
+  // MODO: MOSTRAR RESULTADO
+  // =====================================================================
   if (sessao.enquete_mostrar_resultado) {
     const { data: resultado } = await supabase.rpc('cnv_resultado_enquete', {
       p_enquete_id: enqueteAtual.id
     });
-  
-    const lista = (resultado || []).map(r => ({
-      texto: r.texto,
-      total_votos: parseInt(r.total_votos || 0, 10),
-      percentual: r.percentual || 0
-    }));
-  
-    // Ordenar pela quantidade de votos (maior -> menor)
-    lista.sort((a, b) => b.total_votos - a.total_votos);
-  
-    const totalVotos = lista.reduce((sum, r) => sum + r.total_votos, 0);
-    const vencedora = lista[0];
-    const demais = lista.slice(1);
-  
-    // Caso não tenha votos
-    if (!vencedora || totalVotos === 0) {
-      container.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-full text-center select-none">
-  
-          <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
-            ${esc(enqueteAtual.nome)}
-          </h2>
-  
-          <div class="w-64 h-[3px] sonar-line mb-10"></div>
-  
-          <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl px-12 py-10 shadow-lg max-w-3xl">
-            <p class="text-4xl text-gray-200 mb-4">Nenhum voto registrado.</p>
-            <p class="text-2xl text-gray-300 opacity-80">Aguarde os participantes votarem.</p>
-          </div>
-  
-        </div>
-      `;
-      return;
+
+    // Mapa texto -> { votos, percentual }
+    const mapaResultado = new Map();
+    (resultado || []).forEach(r => {
+      mapaResultado.set(r.texto, {
+        votos: parseInt(r.total_votos || 0, 10),
+        percentual: r.percentual || 0
+      });
+    });
+
+    // Montar lista de opções preservando ORDEM ORIGINAL
+    const itens = opcoes.map((texto, index) => {
+      const dados = mapaResultado.get(texto) || { votos: 0, percentual: 0 };
+      return {
+        indice: index + 1,
+        texto,
+        votos: dados.votos,
+        percentual: dados.percentual
+      };
+    });
+
+    const totalVotos = itens.reduce((sum, item) => sum + item.votos, 0);
+
+    // Descobrir índice da vencedora (maior número de votos; em empate, primeira)
+    let indiceVencedora = 0;
+    for (let i = 1; i < itens.length; i++) {
+      if (itens[i].votos > itens[indiceVencedora].votos) {
+        indiceVencedora = i;
+      }
     }
-  
-    // Layout principal com vencedora + grid
+
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full text-center select-none px-8">
-  
+
         <!-- TÍTULO ENQUETE -->
         <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
           ${esc(enqueteAtual.nome)}
         </h2>
-  
-        <div class="w-64 h-[3px] sonar-line mb-10"></div>
-  
-        <!-- OPÇÃO VENCEDORA COM BORDA PREMIUM -->
-        <div class="backdrop-blur-3xl bg-white/10 
-                    border-4 border-green-300/80
-                    shadow-[0_12px_60px_rgba(0,0,0,0.35)]
-                    rounded-3xl max-w-4xl w-full p-10 mb-12 animate-[fadeZoom_0.4s_ease-out]">
-  
-          <p class="text-2xl text-green-200 mb-2">Opção mais votada</p>
-  
-          <p class="text-4xl font-extrabold text-white mb-4 leading-snug">
-            ${esc(vencedora.texto)}
-          </p>
-  
-          <div class="flex items-baseline justify-center gap-6">
-            <p class="text-6xl font-extrabold text-green-300">
-              ${vencedora.percentual}%
-            </p>
-            <p class="text-2xl text-gray-200">
-              ${vencedora.total_votos} voto${vencedora.total_votos === 1 ? '' : 's'}
-            </p>
-          </div>
-  
-        </div>
-  
-        <!-- GRID DINÂMICO PARA AS DEMAIS OPÇÕES -->
-        ${demais.length > 0 ? `
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl w-full mx-auto mb-10">
-  
-            ${demais.map(r => `
-              <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-8 py-6 shadow-md text-left">
 
-                <p class="text-3xl text-white font-semibold mb-3 leading-snug break-words">
-                  ${esc(r.texto)}
+        <!-- LINHA SONAR -->
+        <div class="w-64 h-[3px] sonar-line mb-10"></div>
+
+        <!-- GRID DE OPÇÕES (todas, na ordem, com destaque na vencedora) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-6xl w-full mx-auto mb-10">
+          ${itens.map((item, idx) => {
+            const ehVencedora = totalVotos > 0 && idx === indiceVencedora;
+            const classeDestaque = ehVencedora
+              ? 'border-4 border-green-300/80 bg-white/15 scale-[1.02]'
+              : 'border border-white/20 bg-white/8';
+
+            return `
+              <div class="backdrop-blur-2xl ${classeDestaque}
+                          rounded-3xl px-8 py-6 shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+                          text-left transition-transform duration-300">
+
+                ${ehVencedora ? `
+                  <p class="text-lg text-green-200 mb-2">Opção mais votada</p>
+                ` : `
+                  <p class="text-lg text-gray-300 mb-2">Opção ${item.indice}</p>
+                `}
+
+                <p class="text-3xl text-white font-semibold mb-4 leading-snug break-words">
+                  ${esc(item.texto)}
                 </p>
-              
-                <div class="text-right">
-                  <p class="text-4xl font-bold text-gray-100">${r.percentual}%</p>
-                  <p class="text-xl text-gray-300">
-                    ${r.total_votos} voto${r.total_votos === 1 ? '' : 's'}
+
+                <div class="flex items-baseline justify-between">
+                  <p class="text-2xl text-gray-200">
+                    ${item.votos} voto${item.votos === 1 ? '' : 's'}
+                  </p>
+                  <p class="text-4xl font-extrabold text-green-300">
+                    ${item.percentual}%
                   </p>
                 </div>
-  
+
               </div>
-            `).join('')}
-  
-          </div>
-        ` : ''}
-  
+            `;
+          }).join('')}
+        </div>
+
         <p class="text-2xl text-gray-200 opacity-80 mt-2">
           Total de votos: ${totalVotos}
         </p>
-  
+
       </div>
     `;
     return;
   }
+
+  // =====================================================================
+  // MODO: VOTAÇÃO ABERTA / FECHADA (SEM OPÇÕES)
+  // =====================================================================
+
+  // Buscar total de votos para o badge
+  const { data: resultadoContagem } = await supabase.rpc('cnv_resultado_enquete', {
+    p_enquete_id: enqueteAtual.id
+  });
+
+  const totalVotosContagem = (resultadoContagem || []).reduce(
+    (sum, r) => sum + parseInt(r.total_votos || 0, 10),
+    0
+  );
+
+  const votacaoAberta = !!sessao.enquete_votacao_aberta;
+
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center h-full text-center select-none px-8">
+
+      <!-- TÍTULO ENQUETE -->
+      <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
+        ${esc(enqueteAtual.nome)}
+      </h2>
+
+      <!-- LINHA SONAR -->
+      <div class="w-64 h-[3px] sonar-line mb-10"></div>
+
+      <!-- CARD PRINCIPAL -->
+      <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl px-12 py-10 shadow-lg max-w-4xl w-full mb-8">
+
+        <p class="text-4xl mb-4 text-gray-100 flex items-center justify-center gap-3">
+          <span>📊</span>
+          <span class="font-extrabold">
+            Enquete ${votacaoAberta ? 'Aberta' : 'Fechada'}
+          </span>
+        </p>
+
+        ${
+          votacaoAberta
+            ? `
+              <p class="text-2xl text-gray-200 opacity-80">
+                Vote pelo seu celular
+              </p>
+            `
+            : `
+              <p class="text-2xl text-gray-300 opacity-80">
+                Votação encerrada
+              </p>
+            `
+        }
+
+      </div>
+
+      <!-- BADGE DISCRETO DE VOTOS -->
+      <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
+        🗳️ ${totalVotosContagem} voto${totalVotosContagem === 1 ? '' : 's'} recebido${totalVotosContagem === 1 ? '' : 's'}
+      </div>
+
+    </div>
+  `;
+}
 
   // =========================================================
   // MODO: VOTAÇÃO ABERTA / FECHADA (SEM OPÇÕES)
