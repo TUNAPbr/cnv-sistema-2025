@@ -494,7 +494,7 @@ async function enviarPergunta(event) {
 async function renderizarEnquetes() {
   const container = document.getElementById('participanteContainer');
   
-  // Carregar enquete
+  // Carregar enquete atual a partir da sessão
   if (sessao.enquete_ativa_id) {
     const { data } = await supabase
       .from('cnv_enquetes')
@@ -505,27 +505,65 @@ async function renderizarEnquetes() {
     enqueteAtual = data;
   }
   
+  // 1) Nenhuma enquete ativa
   if (!enqueteAtual) {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <p class="text-xl text-gray-600">Aguardando enquete...</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+        
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl animate-pulse-slow">
+            <span class="text-6xl">📊</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Aguardando<br>Enquete
+          </h2>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Assim que o moderador iniciar uma enquete, ela aparece aqui.
+        </p>
+
       </div>
     `;
     return;
   }
   
+  // 2) Enquete carregada mas votação fechada
   if (!sessao.enquete_votacao_aberta) {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">🔒</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">${esc(enqueteAtual.nome)}</h2>
-        <p class="text-gray-500">Votação encerrada</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+        <div></div>
+
+        <div class="flex flex-col items-center gap-5 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">🚪</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Enquete Encerrada
+          </h2>
+
+          <p class="text-lg text-gray-700">
+            ${esc(enqueteAtual.nome)}
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          A votação foi finalizada pelo moderador.
+        </p>
+
       </div>
     `;
     return;
   }
   
-  // Verificar se já votou
+  // 3) Verificar se já votou
   const { data: voto } = await supabase
     .from('cnv_enquete_votos')
     .select('*')
@@ -535,66 +573,75 @@ async function renderizarEnquetes() {
   
   if (voto) {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">✅</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Voto registrado!</h2>
-        <p class="text-gray-600">Aguarde o resultado...</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+        <div></div>
+
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">✅</span>
+          </div>
+
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Voto Registrado
+          </h2>
+
+          <p class="text-lg text-gray-700">
+            Obrigado por participar!
+          </p>
+        </div>
+
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          Aguarde o moderador revelar o resultado.
+        </p>
+
       </div>
     `;
     return;
   }
   
-  // Mostrar opções
+  // 4) Tela de votação (participante ainda não votou)
   const opcoes = normalizarOpcoesEnquete(enqueteAtual.opcoes);
   
   container.innerHTML = `
-    <div>
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">${esc(enqueteAtual.nome)}</h2>
-        <p class="text-gray-600">Selecione uma opção:</p>
-      </div>
+    <div class="h-full flex flex-col justify-between animate-fadein">
       
-      <div class="space-y-3">
-        ${opcoes.map((opcao, idx) => `
-          <button onclick="votarEnquete(${idx})" 
-                  class="w-full p-4 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition btn-opcao">
-            ${idx + 1}. ${esc(opcao)}
-          </button>
-        `).join('')}
+      <div></div>
+
+      <div class="space-y-6 animate-slideup">
+        <div class="flex flex-col items-center gap-4 text-center">
+          <div class="w-20 h-20 flex items-center justify-center rounded-2xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-5xl">🗳️</span>
+          </div>
+
+          <h2 class="text-2xl font-extrabold text-gray-800 drop-shadow-sm">
+            ${esc(enqueteAtual.nome)}
+          </h2>
+
+          <p class="text-md text-gray-700">
+            Selecione uma opção abaixo:
+          </p>
+        </div>
+        
+        <div class="space-y-3">
+          ${opcoes.map((opcao, idx) => `
+            <button onclick="votarEnquete(${idx})" 
+                    class="w-full p-4 bg-blue-500 text-white rounded-lg font-bold text-lg hover:bg-blue-600 transition btn-opcao">
+              ${idx + 1}. ${esc(opcao)}
+            </button>
+          `).join('')}
+        </div>
       </div>
+
+      <p class="text-xs text-gray-500 text-center mt-6 animate-fadein-slow">
+        Seu voto é único para esta enquete.
+      </p>
     </div>
   `;
 }
 
-async function votarEnquete(opcao) {
-  if (!confirm(`Confirmar voto na opção ${opcao + 1}?`)) return;
-  
-  try {
-    const { error } = await supabase
-      .from('cnv_enquete_votos')
-      .insert({
-        enquete_id: enqueteAtual.id,
-        device_id: deviceId,
-        opcao_escolhida: opcao
-      });
-    
-    if (error) throw error;
-    
-    alert('✅ Voto registrado!');
-    await renderizar();
-    
-  } catch (error) {
-    console.error('Erro ao votar:', error);
-    
-    if (error.code === '23505') {
-      alert('⚠️ Você já votou nesta enquete');
-    } else {
-      alert('❌ Erro ao registrar voto');
-    }
-    
-    await renderizar();
-  }
-}
 
 // ============================================
 // MODO: QUIZ
