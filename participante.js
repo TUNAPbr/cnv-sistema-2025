@@ -1123,6 +1123,16 @@ async function renderizarQuizPergunta() {
     if (tempo <= 0) {
       clearInterval(intervalo);
     }
+    
+    / desabilita botões quando o tempo acaba
+    ['A', 'B', 'C', 'D'].forEach(letra => {
+      const btn = document.getElementById(`btn${letra}`);
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('opacity-70', 'cursor-not-allowed');
+      }
+    });
+    
   }, 1000);
 }
 
