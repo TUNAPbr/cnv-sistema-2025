@@ -442,76 +442,70 @@ async function renderizarEnquetes() {
   }
 
   // =========================================================
-  // MODO: MOSTRAR RESULTADO
+  // MODO: MOSTRAR RESULTADO (com borda premium + grid dinâmico)
   // =========================================================
   if (sessao.enquete_mostrar_resultado) {
     const { data: resultado } = await supabase.rpc('cnv_resultado_enquete', {
       p_enquete_id: enqueteAtual.id
     });
-
+  
     const lista = (resultado || []).map(r => ({
       texto: r.texto,
       total_votos: parseInt(r.total_votos || 0, 10),
       percentual: r.percentual || 0
     }));
-
+  
     // Ordenar pela quantidade de votos (maior -> menor)
     lista.sort((a, b) => b.total_votos - a.total_votos);
-
+  
     const totalVotos = lista.reduce((sum, r) => sum + r.total_votos, 0);
     const vencedora = lista[0];
     const demais = lista.slice(1);
-
-    // Se ainda não teve voto, mostra mensagem simples
+  
+    // Caso não tenha votos
     if (!vencedora || totalVotos === 0) {
       container.innerHTML = `
         <div class="flex flex-col items-center justify-center h-full text-center select-none">
-
+  
           <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
             ${esc(enqueteAtual.nome)}
           </h2>
-
+  
           <div class="w-64 h-[3px] sonar-line mb-10"></div>
-
-          <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-10 py-8 shadow-lg max-w-3xl">
-            <p class="text-4xl text-gray-200 mb-4">
-              Nenhum voto registrado ainda.
-            </p>
-            <p class="text-2xl text-gray-300 opacity-80">
-              Aguarde os participantes enviarem seus votos.
-            </p>
+  
+          <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl px-12 py-10 shadow-lg max-w-3xl">
+            <p class="text-4xl text-gray-200 mb-4">Nenhum voto registrado.</p>
+            <p class="text-2xl text-gray-300 opacity-80">Aguarde os participantes votarem.</p>
           </div>
-
+  
         </div>
       `;
       return;
     }
-
-    // Layout com vencedora em destaque e demais menores
+  
+    // Layout principal com vencedora + grid
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full text-center select-none px-8">
-
+  
         <!-- TÍTULO ENQUETE -->
         <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
           ${esc(enqueteAtual.nome)}
         </h2>
-
-        <!-- LINHA SONAR -->
+  
         <div class="w-64 h-[3px] sonar-line mb-10"></div>
-
-        <!-- OPÇÃO VENCEDORA -->
-        <div class="backdrop-blur-3xl bg-white/10 border border-yellow-300/60 
+  
+        <!-- OPÇÃO VENCEDORA COM BORDA PREMIUM -->
+        <div class="backdrop-blur-3xl bg-white/10 
+                    border-4 border-green-300/80
                     shadow-[0_12px_60px_rgba(0,0,0,0.35)]
-                    rounded-3xl max-w-4xl w-full p-10 mb-10">
-
-          <p class="text-2xl text-yellow-200 mb-2">
-            Opção mais votada
-          </p>
-
-          <p class="text-4xl font-extrabold text-white mb-4">
+                    rounded-3xl max-w-4xl w-full p-10 mb-12 animate-[fadeZoom_0.4s_ease-out]">
+  
+          <p class="text-2xl text-green-200 mb-2">Opção mais votada</p>
+  
+          <p class="text-4xl font-extrabold text-white mb-4 leading-snug">
             ${esc(vencedora.texto)}
           </p>
-
+  
           <div class="flex items-baseline justify-center gap-6">
             <p class="text-6xl font-extrabold text-green-300">
               ${vencedora.percentual}%
@@ -520,38 +514,39 @@ async function renderizarEnquetes() {
               ${vencedora.total_votos} voto${vencedora.total_votos === 1 ? '' : 's'}
             </p>
           </div>
+  
         </div>
-
-        <!-- DEMAIS OPÇÕES -->
+  
+        <!-- GRID DINÂMICO PARA AS DEMAIS OPÇÕES -->
         ${demais.length > 0 ? `
-          <div class="max-w-4xl w-full space-y-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl w-full mx-auto mb-10">
+  
             ${demais.map(r => `
-              <div class="backdrop-blur-xl bg-white/8 border border-white/15 rounded-2xl px-6 py-4 flex items-center justify-between text-left">
-                <div class="max-w-[70%]">
-                  <p class="text-2xl text-gray-100">
-                    ${esc(r.texto)}
-                  </p>
-                </div>
+              <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-8 py-6 shadow-md text-left">
+
+                <p class="text-3xl text-white font-semibold mb-3 leading-snug break-words">
+                  ${esc(r.texto)}
+                </p>
+              
                 <div class="text-right">
-                  <p class="text-3xl font-bold text-gray-100">
-                    ${r.percentual}%
-                  </p>
-                  <p class="text-lg text-gray-300">
+                  <p class="text-4xl font-bold text-gray-100">${r.percentual}%</p>
+                  <p class="text-xl text-gray-300">
                     ${r.total_votos} voto${r.total_votos === 1 ? '' : 's'}
                   </p>
                 </div>
+  
               </div>
             `).join('')}
+  
           </div>
         ` : ''}
-
+  
         <p class="text-2xl text-gray-200 opacity-80 mt-2">
           Total de votos: ${totalVotos}
         </p>
-
+  
       </div>
     `;
-
     return;
   }
 
