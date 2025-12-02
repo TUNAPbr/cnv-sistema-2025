@@ -635,13 +635,74 @@ async function renderizarEnquetes() {
         </div>
       </div>
 
-      <p class="text-xs text-gray-500 text-center mt-6 animate-fadein-slow">
-        Seu voto é único para esta enquete.
-      </p>
+      <div class="mt-6 text-center animate-fadein-slow">
+        <p class="text-xs text-gray-500">
+          Seu voto é único para esta enquete.
+        </p>
+        <p id="statusVotoMensagem" class="text-xs text-gray-600 mt-2"></p>
+      </div>
     </div>
   `;
 }
 
+async function votarEnquete(opcao) {
+  if (!enqueteAtual || !sessao) return;
+
+  // elemento para mensagens de status no rodapé do card
+  const statusEl = document.getElementById('statusVotoMensagem');
+
+  // feedback imediato
+  if (statusEl) {
+    statusEl.textContent = 'Enviando seu voto...';
+  }
+
+  // desabilitar botões enquanto envia
+  const botoes = document.querySelectorAll('.btn-opcao');
+  botoes.forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add('opacity-70', 'cursor-not-allowed');
+  });
+
+  try {
+    const { error } = await supabase
+      .from('cnv_enquete_votos')
+      .insert({
+        enquete_id: enqueteAtual.id,
+        device_id: deviceId,
+        opcao_escolhida: opcao
+      });
+    
+    if (error) throw error;
+
+    // sucesso: só re-renderiza; a tela de "Voto Registrado" assume o controle
+    if (statusEl) {
+      statusEl.textContent = '';
+    }
+
+    await renderizar();
+    
+  } catch (error) {
+    console.error('Erro ao votar:', error);
+
+    // mensagem de erro elegante, sem alert
+    if (statusEl) {
+      if (error.code === '23505') {
+        statusEl.textContent = 'Você já votou nesta enquete.';
+      } else {
+        statusEl.textContent = 'Erro ao registrar voto. Tente novamente em instantes.';
+      }
+    }
+
+    // reabilitar botões em caso de erro
+    botoes.forEach(btn => {
+      btn.disabled = false;
+      btn.classList.remove('opacity-70', 'cursor-not-allowed');
+    });
+  }
+}
+
+// garantir que o onclick no HTML encontre a função
+window.votarEnquete = votarEnquete;
 
 // ============================================
 // MODO: QUIZ
