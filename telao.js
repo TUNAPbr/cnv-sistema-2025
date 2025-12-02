@@ -193,20 +193,26 @@ async function conectarRealtime() {
 
 async function renderizar() {
   if (!sessao) return;
-  
+
   const container = document.getElementById('telaoContainer');
-  container.className = 'w-full h-screen p-8 fade-in';
-  
-  // Decisão de renderização baseada no modo
-  if (sessao.modo === 'aguardando') {
-    renderizarAguardando();
-  } else if (sessao.modo === 'perguntas') {
-    await renderizarPerguntas();
-  } else if (sessao.modo === 'enquetes') {
-    await renderizarEnquetes();
-  } else if (sessao.modo === 'quiz') {
-    await renderizarQuiz();
-  }
+
+  container.classList.remove('fade-in');
+  container.classList.add('fade-out');
+
+  setTimeout(async () => {
+    container.classList.remove('fade-out');
+    container.classList.add('fade-in');
+
+    if (sessao.modo === 'aguardando') {
+      renderizarAguardando();
+    } else if (sessao.modo === 'perguntas') {
+      await renderizarPerguntas();
+    } else if (sessao.modo === 'enquetes') {
+      await renderizarEnquetes();
+    } else if (sessao.modo === 'quiz') {
+      await renderizarQuiz();
+    }
+  }, 150);
 }
 
 // ============================================
@@ -322,17 +328,58 @@ async function renderizarPerguntas() {
       '<span class="text-gray-400">🔴 Perguntas FECHADAS</span>';
     
     container.innerHTML = `
-      <div class="flex flex-col items-center justify-center h-full">
-        <div class="text-center">
-          <h1 class="text-6xl font-bold mb-4 ocean-text">${esc(palestraAtual.nome)}</h1>
-          <p class="text-4xl text-gray-200 mb-8 ocean-text">Palestrante: ${esc(palestraAtual.palestrante)}</p>
-          <div class="text-5xl font-bold mb-8">${statusTexto}</div>
-          ${sessao.perguntas_abertas ? 
-            '<p class="text-3xl glow-tertiary animate-pulse">📱 Envie sua pergunta pelo celular!</p>' : 
-            '<p class="text-3xl text-gray-300 ocean-text">Perguntas encerradas</p>'
-          }
-        </div>
+    <div class="flex flex-col items-center justify-center h-full text-center select-none">
+  
+      <!-- TÍTULO -->
+      <h1 class="text-7xl font-extrabold mb-4 ocean-text glow-tertiary">
+        ${esc(palestraAtual.nome)}
+      </h1>
+  
+      <!-- PALESTRANTE -->
+      <p class="text-3xl text-gray-200 mb-6 opacity-80">
+        ${esc(palestraAtual.palestrante)}
+      </p>
+  
+      <!-- LINHA ANIMADA (SONAR) -->
+      <div class="w-64 h-[3px] mx-auto mb-10 sonar-line"></div>
+  
+      <!-- BADGE PRINCIPAL -->
+      <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-10 py-6 shadow-lg mb-8 inline-block">
+  
+        ${
+          sessao.perguntas_abertas
+            ? `
+              <div class="flex items-center justify-center gap-4 mb-2">
+                <div class="w-5 h-5 bg-green-400 rounded-full animate-ping"></div>
+                <p class="text-5xl font-bold text-green-300 drop-shadow-lg">
+                  Perguntas ABERTAS
+                </p>
+              </div>
+              <p class="text-xl text-gray-200 opacity-80 mt-4">
+                Envie sua pergunta pelo celular
+              </p>
+            `
+            : `
+              <div class="flex items-center justify-center gap-4 mb-2">
+                <div class="w-5 h-5 bg-red-400 rounded-full"></div>
+                <p class="text-5xl font-bold text-red-300 drop-shadow-lg">
+                  Perguntas FECHADAS
+                </p>
+              </div>
+              <p class="text-xl text-gray-300 opacity-70 mt-4">
+                Perguntas encerradas
+              </p>
+            `
+        }
+  
       </div>
+  
+      <!-- CONTADOR DISCRETO -->
+      <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
+        📬 ${perguntasRecebidas?.length || 0} perguntas recebidas
+      </div>
+  
+    </div>
     `;
   }
 }
