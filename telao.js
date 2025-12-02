@@ -4,11 +4,11 @@
 // ============================================
 let ultimoModoTelao = null;
 
-function renderizarModo() {
-  if (sessao.modo === 'aguardando') renderizarAguardando();
-  if (sessao.modo === 'perguntas') renderizarPerguntas();
-  if (sessao.modo === 'enquetes') renderizarEnquetes();
-  if (sessao.modo === 'quiz') renderizarQuiz();
+async function renderizarModo() {
+  if (sessao.modo === 'aguardando') return renderizarAguardando();
+  if (sessao.modo === 'perguntas') return renderizarPerguntas();
+  if (sessao.modo === 'enquetes') return renderizarEnquetes();
+  if (sessao.modo === 'quiz') return renderizarQuiz();
 }
 
 
@@ -204,32 +204,26 @@ async function renderizar() {
 
   const container = document.getElementById('telaoContainer');
 
+  // só anima quando o modo muda
   if (ultimoModoTelao !== sessao.modo) {
-  container.classList.remove('fade-in');
-  container.classList.add('fade-out');
+    container.classList.remove('fade-in');
+    container.classList.add('fade-out');
 
-  setTimeout(() => {
-    container.classList.remove('fade-out');
-    container.classList.add('fade-in');
-    ultimoModoTelao = sessao.modo;
+    setTimeout(async () => {
+      container.classList.remove('fade-out');
+      container.classList.add('fade-in');
 
-    if (sessao.modo === 'aguardando') {
-      renderizarAguardando();
-    } else if (sessao.modo === 'perguntas') {
-      await renderizarPerguntas();
-    } else if (sessao.modo === 'enquetes') {
-      await renderizarEnquetes();
-    } else if (sessao.modo === 'quiz') {
-      await renderizarQuiz();
-    }
-  
-      renderizarModo();
+      ultimoModoTelao = sessao.modo;
+      await renderizarModo();
     }, 160);
+    
     return;
   }
-  
-  renderizarModo();
+
+  // não mudou o modo → renderiza sem animação
+  await renderizarModo();
 }
+
 
 // ============================================
 // MODO: AGUARDANDO
