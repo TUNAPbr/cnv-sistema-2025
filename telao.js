@@ -421,7 +421,7 @@ async function renderizarPerguntas() {
 async function renderizarEnquetes() {
   const container = document.getElementById('telaoContainer');
   
-  // Carregar enquete
+  // Carregar enquete ativa
   if (sessao.enquete_ativa_id && (!enqueteAtual || enqueteAtual.id !== sessao.enquete_ativa_id)) {
     const { data } = await supabase
       .from('cnv_enquetes')
@@ -433,79 +433,171 @@ async function renderizarEnquetes() {
   }
   
   if (!enqueteAtual) {
-    container.innerHTML = '<div class="flex items-center justify-center h-full"><p class="text-4xl ocean-text">Aguardando enquete...</p></div>';
+    container.innerHTML = `
+      <div class="flex items-center justify-center h-full">
+        <p class="text-4xl ocean-text">Aguardando enquete...</p>
+      </div>
+    `;
     return;
   }
-  
-  const opcoes = normalizarOpcoesEnquete(enqueteAtual.opcoes);
-  
-  // Se deve mostrar resultado
+
+  const opcoes = normalizarOpcoesEnquete(enqueteAtual.opcoes || []);
+
+  // =====================================================================
+  // MODO: MOSTRAR RESULTADO
+  // =====================================================================
   if (sessao.enquete_mostrar_resultado) {
     const { data: resultado } = await supabase.rpc('cnv_resultado_enquete', {
       p_enquete_id: enqueteAtual.id
     });
-    
-    const totalVotos = (resultado || []).reduce((sum, r) => sum + parseInt(r.total_votos), 0);
-    
+
+    // Mapa texto -> { votos, percentual }
+    const mapaResultado = new Map();
+    (resultado || []).forEach(r => {
+      mapaResultado.set(r.texto, {
+        votos: parseInt(r.total_votos || 0, 10),
+        percentual: r.percentual || 0
+      });
+    });
+
+    // Montar lista de opções preservando ORDEM ORIGINAL
+    const itens = opcoes.map((texto, index) => {
+      const dados = mapaResultado.get(texto) || { votos: 0, percentual: 0 };
+      return {
+        indice: index + 1,
+        texto,
+        votos: dados.votos,
+        percentual: dados.percentual
+      };
+    });
+
+    const totalVotos = itens.reduce((sum, item) => sum + item.votos, 0);
+
+    // Descobrir índice da vencedora (maior número de votos; em empate, primeira)
+    let indiceVencedora = 0;
+    for (let i = 1; i < itens.length; i++) {
+      if (itens[i].votos > itens[indiceVencedora].votos) {
+        indiceVencedora = i;
+      }
+    }
+
     container.innerHTML = `
-      <div class="flex flex-col h-full justify-center">
-        <h2 class="text-6xl font-bold text-center mb-12 ocean-text">${esc(enqueteAtual.nome)}</h2>
-        
-        <div class="space-y-6 px-12">
-          ${(resultado || []).map((r, index) => {
-            const percentual = r.percentual || 0;
-            const cores = ['bg-blue-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-sky-500', 'bg-blue-600'];
-            const corBarra = cores[index % cores.length];
-            
+      <div class="flex flex-col items-center justify-center h-full text-center select-none px-8">
+
+        <!-- TÍTULO ENQUETE -->
+        <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
+          ${esc(enqueteAtual.nome)}
+        </h2>
+
+        <!-- LINHA SONAR -->
+        <div class="w-64 h-[3px] sonar-line mb-10"></div>
+
+        <!-- GRID DE OPÇÕES (todas, na ordem, com destaque na vencedora) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-6xl w-full mx-auto mb-10">
+          ${itens.map((item, idx) => {
+            const ehVencedora = totalVotos > 0 && idx === indiceVencedora;
+            const classeDestaque = ehVencedora
+              ? 'border-4 border-green-300/80 bg-white/15 scale-[1.02]'
+              : 'border border-white/20 bg-white/8';
+
             return `
-              <div class="ocean-card rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-3">
-                  <p class="text-3xl font-bold ocean-text">${esc(r.texto)}</p>
-                  <div class="text-right">
-                    <p class="text-4xl font-bold glow-tertiary">${percentual}%</p>
-                    <p class="text-xl text-gray-300">${r.total_votos} votos</p>
-                  </div>
+              <div class="backdrop-blur-2xl ${classeDestaque}
+                          rounded-3xl px-8 py-6 shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+                          text-left transition-transform duration-300">
+
+                ${ehVencedora ? `
+                  <p class="text-lg text-green-200 mb-2">Opção mais votada</p>
+                ` : `
+                  <p class="text-lg text-gray-300 mb-2">Opção ${item.indice}</p>
+                `}
+
+                <p class="text-3xl text-white font-semibold mb-4 leading-snug break-words">
+                  ${esc(item.texto)}
+                </p>
+
+                <div class="flex items-baseline justify-between">
+                  <p class="text-2xl text-gray-200">
+                    ${item.votos} voto${item.votos === 1 ? '' : 's'}
+                  </p>
+                  <p class="text-4xl font-extrabold text-green-300">
+                    ${item.percentual}%
+                  </p>
                 </div>
-                <div class="w-full bg-white bg-opacity-20 rounded-full h-6 overflow-hidden">
-                  <div class="${corBarra} h-6 rounded-full shimmer transition-all duration-1000" style="width: ${percentual}%"></div>
-                </div>
+
               </div>
             `;
           }).join('')}
         </div>
-        
-        <p class="text-center text-3xl mt-8 text-gray-300 ocean-text">Total de votos: ${totalVotos}</p>
+
+        <p class="text-2xl text-gray-200 opacity-80 mt-2">
+          Total de votos: ${totalVotos}
+        </p>
+
       </div>
     `;
-  } else {
-    // Votação aberta
-    const statusVotacao = sessao.enquete_votacao_aberta ?
-      '<span class="text-green-400">🟢 VOTAÇÃO ABERTA</span>' :
-      '<span class="text-gray-400">🔴 VOTAÇÃO FECHADA</span>';
-    
-    container.innerHTML = `
-      <div class="flex flex-col items-center justify-center h-full">
-        <div class="text-center max-w-5xl">
-          <h2 class="text-7xl font-bold mb-8 ocean-text">${esc(enqueteAtual.nome)}</h2>
-          
-          <div class="text-6xl font-bold mb-12">${statusVotacao}</div>
-          
-          <div class="grid grid-cols-1 gap-4 mb-8">
-            ${opcoes.map((opcao, index) => `
-              <div class="ocean-card rounded-2xl p-6 bubble" style="animation-delay: ${index * 0.1}s">
-                <p class="text-4xl font-bold ocean-text">${String.fromCharCode(65 + index)}) ${esc(opcao)}</p>
-              </div>
-            `).join('')}
-          </div>
-          
-          ${sessao.enquete_votacao_aberta ? 
-            '<p class="text-4xl glow-tertiary animate-pulse">📱 Vote pelo seu celular!</p>' : 
-            '<p class="text-4xl text-gray-300 ocean-text">Aguardando resultado...</p>'
-          }
-        </div>
-      </div>
-    `;
+    return;
   }
+
+  // =====================================================================
+  // MODO: VOTAÇÃO ABERTA / FECHADA (SEM OPÇÕES)
+  // =====================================================================
+
+  // Buscar total de votos para o badge
+  const { data: resultadoContagem } = await supabase.rpc('cnv_resultado_enquete', {
+    p_enquete_id: enqueteAtual.id
+  });
+
+  const totalVotosContagem = (resultadoContagem || []).reduce(
+    (sum, r) => sum + parseInt(r.total_votos || 0, 10),
+    0
+  );
+
+  const votacaoAberta = !!sessao.enquete_votacao_aberta;
+
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center h-full text-center select-none px-8">
+
+      <!-- TÍTULO ENQUETE -->
+      <h2 class="text-6xl font-extrabold mb-4 ocean-text glow-tertiary">
+        ${esc(enqueteAtual.nome)}
+      </h2>
+
+      <!-- LINHA SONAR -->
+      <div class="w-64 h-[3px] sonar-line mb-10"></div>
+
+      <!-- CARD PRINCIPAL -->
+      <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl px-12 py-10 shadow-lg max-w-4xl w-full mb-8">
+
+        <p class="text-4xl mb-4 text-gray-100 flex items-center justify-center gap-3">
+          <span>📊</span>
+          <span class="font-extrabold">
+            Enquete ${votacaoAberta ? 'Aberta' : 'Fechada'}
+          </span>
+        </p>
+
+        ${
+          votacaoAberta
+            ? `
+              <p class="text-2xl text-gray-200 opacity-80">
+                Vote pelo seu celular
+              </p>
+            `
+            : `
+              <p class="text-2xl text-gray-300 opacity-80">
+                Votação encerrada
+              </p>
+            `
+        }
+
+      </div>
+
+      <!-- BADGE DISCRETO DE VOTOS -->
+      <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
+        🗳️ ${totalVotosContagem} voto${totalVotosContagem === 1 ? '' : 's'} recebido${totalVotosContagem === 1 ? '' : 's'}
+      </div>
+
+    </div>
+  `;
 }
 
 // ============================================
