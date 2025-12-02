@@ -218,12 +218,6 @@ function renderizarAguardando() {
   
   container.innerHTML = `
     <div class="relative flex flex-col items-center justify-center h-full breathe overflow-hidden">
-    
-      <div class="pointer-events-none absolute inset-0">
-        <span class="marine-emoji marine-emoji-1">🐬</span>
-        <span class="marine-emoji marine-emoji-2">🐟</span>
-        <span class="marine-emoji marine-emoji-3">🌊</span>
-      </div>
 
       <div class="relative text-center">
         <h1 class="text-8xl font-bold mb-6 ocean-text">
