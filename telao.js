@@ -316,19 +316,45 @@ async function renderizarPerguntas() {
     .single();
   
   if (pergunta) {
-    // Mostrar pergunta específica
+    const nomeAutor = pergunta.nome_autor ? esc(pergunta.nome_autor) : "Anônimo";
+    const avatarEmoji = pergunta.nome_autor ? "🧑" : "🕵️";
+  
     container.innerHTML = `
-      <div class="flex flex-col items-center justify-center h-full">
-        <div class="ocean-card rounded-3xl p-12 max-w-4xl w-full bubble">
-          <div class="mb-6">
-            <h2 class="text-3xl font-bold glow-tertiary">${esc(palestraAtual.nome)}</h2>
-            <p class="text-xl text-gray-200 ocean-text">${esc(palestraAtual.palestrante)}</p>
+      <div class="flex flex-col items-center justify-center h-full select-none">
+  
+        <div class="backdrop-blur-3xl bg-white/10 border border-white/20
+                    shadow-[0_12px_60px_rgba(0,0,0,0.35)]
+                    rounded-3xl max-w-5xl w-full p-16 animate-[fadeZoom_0.4s_ease-out]">
+  
+          <!-- Header -->
+          <h2 class="text-4xl font-extrabold mb-2 ocean-text">
+            ${esc(palestraAtual.nome)}
+          </h2>
+  
+          <p class="text-2xl text-gray-100 opacity-80 mb-8">
+            ${esc(palestraAtual.palestrante)}
+          </p>
+  
+          <!-- SONAR LINE -->
+          <div class="w-full h-[3px] sonar-line mb-10"></div>
+  
+          <!-- Autor -->
+          <div class="flex items-center gap-4 mb-6">
+            <span class="text-4xl">${avatarEmoji}</span>
+            <span class="text-2xl text-gray-200 opacity-90">
+              ${nomeAutor} perguntou:
+            </span>
           </div>
-          <div class="mb-4">
-            <p class="text-2xl text-gray-300 mb-2 ocean-text">💬 ${pergunta.nome_autor || 'Participante'} pergunta:</p>
+  
+          <!-- Pergunta -->
+          <div class="max-w-3xl mx-auto">
+            <p class="text-5xl leading-snug text-white font-semibold drop-shadow-xl break-words">
+              ${esc(pergunta.pergunta)}
+            </p>
           </div>
-          <p class="text-5xl font-bold leading-relaxed ocean-text">${esc(pergunta.pergunta)}</p>
+  
         </div>
+  
       </div>
     `;
   } else {
