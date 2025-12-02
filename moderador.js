@@ -25,10 +25,12 @@ let perguntasRecebidas = [];
 let quizAtual = null;
 let perguntasQuiz = [];
 let rankingQuiz = [];
+let participantesQuiz = [];
 
 // Canais realtime
 let canalSessao = null;
 let canalEnqueteVotos = null;
+let canalQuizParticipantes = null;
 
 // Debounce para não spammar o backend
 let timeoutAtualizarResultadoEnquete = null;
