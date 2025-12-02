@@ -567,7 +567,7 @@ async function renderizarQuiz() {
   } else if (estado === 'countdown_3s') {
     renderizarQuizCountdown();
   } else if (estado === 'jogando_pergunta') {
-    await ();
+    await renderizarQuizPergunta();
   } else if (estado === 'tempo_esgotado') {
     renderizarQuizTempoEsgotado();
   } else if (estado === 'resposta_revelada') {
