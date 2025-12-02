@@ -204,12 +204,24 @@ async function renderizar() {
 
 function renderizarAguardando() {
   const container = document.getElementById('participanteContainer');
-  
+
   container.innerHTML = `
-    <div class="text-center py-12">
-      <div class="text-6xl mb-4">⏸️</div>
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">Aguardando Atividade</h2>
-      <p class="text-gray-600">O moderador vai iniciar em breve...</p>
+    <div class="h-full flex flex-col items-center justify-center text-center px-6 animate-fadein">
+      
+      <div class="mb-6">
+        <div class="w-20 h-20 mx-auto flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-300 to-blue-500 shadow-lg animate-pulse-slow">
+          <span class="text-5xl">⏳</span>
+        </div>
+      </div>
+
+      <h2 class="text-3xl font-extrabold text-gray-800 mb-2 tracking-wide">
+        Aguardando Atividade
+      </h2>
+
+      <p class="text-gray-600 text-lg">
+        O moderador vai iniciar em instantes...
+      </p>
+
     </div>
   `;
 }
