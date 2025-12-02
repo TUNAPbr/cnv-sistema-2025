@@ -451,27 +451,26 @@ async function renderizarEnquetes() {
       p_enquete_id: enqueteAtual.id
     });
 
-    // Mapa texto -> { votos, percentual }
-    const mapaResultado = new Map();
-    (resultado || []).forEach(r => {
-      mapaResultado.set(r.texto, {
-        votos: parseInt(r.total_votos || 0, 10),
-        percentual: r.percentual || 0
-      });
-    });
-
+    // Garantir array
+    const listaResultado = Array.isArray(resultado) ? resultado : [];
+  
     // Montar lista de opções preservando ORDEM ORIGINAL
+    // e casando por ÍNDICE, não por texto
     const itens = opcoes.map((texto, index) => {
-      const dados = mapaResultado.get(texto) || { votos: 0, percentual: 0 };
+      const r = listaResultado[index]; // mesmo índice da opção
+      const votos = r ? parseInt(r.total_votos || 0, 10) : 0;
+      const percentual = r ? (r.percentual || 0) : 0;
+  
       return {
         indice: index + 1,
         texto,
-        votos: dados.votos,
-        percentual: dados.percentual
+        votos,
+        percentual
       };
     });
-
+  
     const totalVotos = itens.reduce((sum, item) => sum + item.votos, 0);
+
 
     // Descobrir índice da vencedora (maior número de votos; em empate, primeira)
     let indiceVencedora = 0;
