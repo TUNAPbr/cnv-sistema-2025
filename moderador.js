@@ -31,6 +31,7 @@ let participantesQuiz = [];
 let canalSessao = null;
 let canalEnqueteVotos = null;
 let canalQuizParticipantes = null;
+let canalPerguntas = null;
 
 // Debounce para não spammar o backend
 let timeoutAtualizarResultadoEnquete = null;
@@ -243,8 +244,33 @@ async function conectarRealtime() {
       }
     })
     .subscribe();
+
+  // Canal das perguntas em tempo real
+  canalPerguntas = supabase
+    .channel('moderador_perguntas')
+    .on('postgres_changes', {
+      event: '*',                 // INSERT, UPDATE, DELETE
+      schema: 'public',
+      table: 'cnv_perguntas'
+    }, (payload) => {
+      // Segurança básica: só atualizar se estivermos no modo PERGUNTAS
+      if (modoAtivo !== 'perguntas') return;
+
+      const pergunta = payload.new || payload.old;
+      
+      // Se quiser, filtra pela palestra ativa
+      if (sessaoAtual?.palestra_ativa_id && pergunta?.palestra_id !== sessaoAtual.palestra_ativa_id) {
+        return;
+      }
+
+      console.log('❓ Perguntas atualizadas em tempo real:', payload.eventType);
+      if (typeof atualizarControle === 'function') {
+        atualizarControle();
+      }
+    })
+    .subscribe();
   
-  console.log('✅ Realtime conectado (sessão + enquete + participantes)');
+  console.log('✅ Realtime conectado (sessão + enquete + participantes + perguntas)');
 }
 
 // ============================================
