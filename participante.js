@@ -206,19 +206,26 @@ function renderizarAguardando() {
   const container = document.getElementById('participanteContainer');
 
   container.innerHTML = `
-    <div class="h-full flex flex-col items-center justify-center text-center px-6 animate-fadein">
-      
-      <div class="mb-6">
-        <div class="w-20 h-20 mx-auto flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-300 to-blue-500 shadow-lg animate-pulse-slow">
-          <span class="text-5xl">⏳</span>
+    <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+
+      <!-- topo -->
+      <div></div>
+
+      <!-- conteúdo principal -->
+      <div class="flex flex-col items-center gap-6 animate-slideup">
+
+        <div class="w-24 h-24 mx-auto flex items-center justify-center rounded-3xl 
+                    bg-white/20 backdrop-blur-md shadow-xl animate-pulse-slow">
+          <span class="text-6xl">⏳</span>
         </div>
+
+        <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+          Aguardando<br>Atividade
+        </h2>
       </div>
 
-      <h2 class="text-3xl font-extrabold text-gray-800 mb-2 tracking-wide">
-        Aguardando Atividade
-      </h2>
-
-      <p class="text-gray-600 text-lg">
+      <!-- rodapé do card -->
+      <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
         O moderador vai iniciar em instantes...
       </p>
 
