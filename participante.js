@@ -1124,7 +1124,7 @@ async function renderizarQuizPergunta() {
       clearInterval(intervalo);
     }
     
-    / desabilita botões quando o tempo acaba
+    // desabilita botões quando o tempo acaba
     ['A', 'B', 'C', 'D'].forEach(letra => {
       const btn = document.getElementById(`btn${letra}`);
       if (btn) {
