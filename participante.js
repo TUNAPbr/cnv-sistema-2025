@@ -567,7 +567,7 @@ async function renderizarQuiz() {
   } else if (estado === 'countdown_3s') {
     renderizarQuizCountdown();
   } else if (estado === 'jogando_pergunta') {
-    await renderizarQuizPergunta();
+    await ();
   } else if (estado === 'tempo_esgotado') {
     renderizarQuizTempoEsgotado();
   } else if (estado === 'resposta_revelada') {
@@ -578,12 +578,16 @@ async function renderizarQuiz() {
 }
 
 async function verificarCadastroQuiz() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('cnv_quiz_participantes')
     .select('*')
     .eq('quiz_id', quizAtual.id)
     .eq('device_id', deviceId)
-    .single();
+    .maybeSingle();
+
+  if (error) {
+    console.error('Erro ao verificar cadastro no quiz:', error);
+  }
   
   participanteQuiz = data;
 }
@@ -718,14 +722,19 @@ async function renderizarQuizPergunta() {
   if (!perguntaQuizAtual) return;
   
   // Verificar se já respondeu
-  const { data: resposta } = await supabase
+  const { data: resposta, error } = await supabase
     .from('cnv_quiz_respostas')
     .select('*')
     .eq('quiz_pergunta_id', perguntaQuizAtual.id)
     .eq('device_id', deviceId)
-    .single();
+    .maybeSingle(); // 👈 evita 406 quando não tem resposta
+
+  if (error) {
+    console.error('Erro ao buscar resposta do quiz:', error);
+  }
   
   minhaResposta = resposta;
+
   
   if (resposta) {
     container.innerHTML = `
