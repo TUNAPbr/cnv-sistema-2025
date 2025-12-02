@@ -322,11 +322,17 @@ async function renderizarPerguntas() {
       </div>
     `;
   } else {
-    // Status geral
-    const statusTexto = sessao.perguntas_abertas ? 
-      '<span class="text-green-400">🟢 Perguntas ABERTAS</span>' : 
-      '<span class="text-gray-400">🔴 Perguntas FECHADAS</span>';
-    
+
+    // 🔥 NOVO: buscar total de perguntas no Supabase
+    const { data: listaPerguntas } = await supabase
+      .from('cnv_perguntas')
+      .select('id')
+      .eq('palestra_id', palestraAtual.id)
+      .eq('deletada', false);
+
+    const totalPerguntas = listaPerguntas?.length || 0;
+
+    // 🔥 NOVA INTERFACE PREMIUM
     container.innerHTML = `
     <div class="flex flex-col items-center justify-center h-full text-center select-none">
   
@@ -376,7 +382,7 @@ async function renderizarPerguntas() {
   
       <!-- CONTADOR DISCRETO -->
       <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
-        📬 ${perguntasRecebidas?.length || 0} perguntas recebidas
+        📬 ${totalPerguntas} perguntas recebidas
       </div>
   
     </div>
