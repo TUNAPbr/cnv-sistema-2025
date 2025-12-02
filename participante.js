@@ -746,7 +746,7 @@ async function renderizarQuiz() {
   } else if (!participanteQuiz) {
     // Fora do período de cadastro e não está cadastrado
     renderizarQuizNaoCadastrado();
-  } else if (estado === 'aguardando_inicio') {
+    } else if (estado === 'aguardando_inicio') {
     renderizarQuizAguardando();
   } else if (estado === 'countdown_3s') {
     renderizarQuizCountdown();
@@ -757,7 +757,18 @@ async function renderizarQuiz() {
   } else if (estado === 'resposta_revelada') {
     await mostrarFeedbackQuiz();
   } else if (estado === 'ranking') {
-    await renderizarQuizResultadoFinal();
+    // 👇 só mostra ranking individual se o moderador mandar explicitamente
+    const meta = sessao.metadata || {};
+
+    if (meta.quiz_mostrar_ranking_individual && participanteQuiz) {
+      await renderizarQuizResultadoFinal();
+    } else if (!participanteQuiz) {
+      // não cadastrado → mantém mensagem neutra
+      renderizarQuizNaoCadastrado();
+    } else {
+      // cadastrado, mas sem ranking individual liberado → fica em modo aguardando
+      renderizarQuizAguardando();
+    }
   } else {
     renderizarQuizAguardando();
   }
