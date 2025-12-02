@@ -478,8 +478,7 @@ async function enviarPergunta(event) {
       });
     
     if (error) throw error;
-    
-    alert('✅ Pergunta enviada com sucesso!');
+
     await renderizar();
     
   } catch (error) {
