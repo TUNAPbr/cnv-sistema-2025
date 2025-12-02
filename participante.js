@@ -548,16 +548,19 @@ async function renderizarQuiz() {
   }
   
   const estado = sessao.quiz_estado;
-  
-  // Verificar se está cadastrado
-  if (estado !== 'cadastro_nomes') {
-    await verificarCadastroQuiz();
-  }
-  
-  // Decisões baseadas no estado
-  if (estado === 'cadastro_nomes') {
+
+  // Sempre conferir se esse device já está cadastrado no quiz
+  await verificarCadastroQuiz();
+
+  // Decisões baseadas no estado + cadastro
+  if (estado === 'cadastro_nomes' && !participanteQuiz) {
+    // Período de cadastro e ainda não se cadastrou
     renderizarQuizCadastro();
+  } else if (estado === 'cadastro_nomes' && participanteQuiz) {
+    // Já se cadastrou: mostra tela de aguardando
+    renderizarQuizAguardando();
   } else if (!participanteQuiz) {
+    // Fora do período de cadastro e não está cadastrado
     renderizarQuizNaoCadastrado();
   } else if (estado === 'aguardando_inicio') {
     renderizarQuizAguardando();
@@ -572,7 +575,6 @@ async function renderizarQuiz() {
   } else {
     renderizarQuizAguardando();
   }
-}
 
 async function verificarCadastroQuiz() {
   const { data } = await supabase
