@@ -2,6 +2,14 @@
 // TELAO.JS - TEMA MAR DE OPORTUNIDADES
 // Tela de Projeção (Read-Only)
 // ============================================
+let ultimoModoTelao = null;
+
+function renderizarModo() {
+  if (sessao.modo === 'aguardando') renderizarAguardando();
+  if (sessao.modo === 'perguntas') renderizarPerguntas();
+  if (sessao.modo === 'enquetes') renderizarEnquetes();
+  if (sessao.modo === 'quiz') renderizarQuiz();
+}
 
 
 const frasesMotivacionais = [
@@ -155,12 +163,12 @@ async function conectarRealtime() {
       await renderizar();
     })
     .on('postgres_changes', {
-      event: 'UPDATE',
+      event: '*',  // INSERT + UPDATE + DELETE
       schema: 'public',
       table: 'cnv_perguntas'
     }, async () => {
       if (sessao?.modo === 'perguntas') {
-        await renderizar();
+        renderizarPerguntas(); // sem fade geral, mais rápido
       }
     })
     .on('postgres_changes', {
@@ -196,12 +204,14 @@ async function renderizar() {
 
   const container = document.getElementById('telaoContainer');
 
+  if (ultimoModoTelao !== sessao.modo) {
   container.classList.remove('fade-in');
   container.classList.add('fade-out');
 
-  setTimeout(async () => {
+  setTimeout(() => {
     container.classList.remove('fade-out');
     container.classList.add('fade-in');
+    ultimoModoTelao = sessao.modo;
 
     if (sessao.modo === 'aguardando') {
       renderizarAguardando();
@@ -212,7 +222,13 @@ async function renderizar() {
     } else if (sessao.modo === 'quiz') {
       await renderizarQuiz();
     }
-  }, 150);
+  
+      renderizarModo();
+    }, 160);
+    return;
+  }
+  
+  renderizarModo();
 }
 
 // ============================================
@@ -325,53 +341,42 @@ async function renderizarPerguntas() {
 
     // 🔥 NOVO: buscar total de perguntas no Supabase
     const { data: listaPerguntas } = await supabase
-      .from('cnv_perguntas')
-      .select('id')
-      .eq('palestra_id', palestraAtual.id)
-      .eq('deletada', false);
-
-    const totalPerguntas = listaPerguntas?.length || 0;
-
-    // 🔥 NOVA INTERFACE PREMIUM
-    container.innerHTML = `
-    <div class="flex flex-col items-center justify-center h-full text-center select-none">
+    .from('cnv_perguntas')
+    .select('id')
+    .eq('palestra_id', palestraAtual.id)
+    .eq('deletada', false);
   
-      <!-- TÍTULO -->
+  const totalPerguntas = listaPerguntas?.length || 0;
+  
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center h-full text-center">
+  
       <h1 class="text-7xl font-extrabold mb-4 ocean-text glow-tertiary">
         ${esc(palestraAtual.nome)}
       </h1>
   
-      <!-- PALESTRANTE -->
-      <p class="text-3xl text-gray-200 mb-6 opacity-80">
+      <p class="text-3xl text-gray-200 opacity-80 mb-6">
         ${esc(palestraAtual.palestrante)}
       </p>
   
-      <!-- LINHA ANIMADA (SONAR) -->
-      <div class="w-64 h-[3px] mx-auto mb-10 sonar-line"></div>
+      <div class="w-64 h-[3px] sonar-line mb-10"></div>
   
-      <!-- BADGE PRINCIPAL -->
-      <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-10 py-6 shadow-lg mb-8 inline-block">
+      <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl px-10 py-6 shadow-lg mb-8">
   
         ${
           sessao.perguntas_abertas
             ? `
-              <div class="flex items-center justify-center gap-4 mb-2">
-                <div class="w-5 h-5 bg-green-400 rounded-full animate-ping"></div>
-                <p class="text-5xl font-bold text-green-300 drop-shadow-lg">
-                  Perguntas ABERTAS
-                </p>
-              </div>
-              <p class="text-xl text-gray-200 opacity-80 mt-4">
+              <p class="text-5xl font-bold text-green-300">
+                Perguntas Abertas
+              </p>
+              <p class="text-xl text-gray-200 opacity-70 mt-4">
                 Envie sua pergunta pelo celular
               </p>
             `
             : `
-              <div class="flex items-center justify-center gap-4 mb-2">
-                <div class="w-5 h-5 bg-red-400 rounded-full"></div>
-                <p class="text-5xl font-bold text-red-300 drop-shadow-lg">
-                  Perguntas FECHADAS
-                </p>
-              </div>
+              <p class="text-5xl font-bold text-red-300">
+                Perguntas Fechadas
+              </p>
               <p class="text-xl text-gray-300 opacity-70 mt-4">
                 Perguntas encerradas
               </p>
@@ -380,13 +385,12 @@ async function renderizarPerguntas() {
   
       </div>
   
-      <!-- CONTADOR DISCRETO -->
       <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-2 rounded-full text-gray-200 text-lg opacity-90">
         📬 ${totalPerguntas} perguntas recebidas
       </div>
   
     </div>
-    `;
+  `;
   }
 }
 
