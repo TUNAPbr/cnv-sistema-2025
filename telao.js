@@ -401,7 +401,7 @@ async function renderizarQuiz() {
   } else if (estado === 'resposta_revelada') {
     await renderizarQuizResultado();
   } else if (estado === 'ranking') {
-    await renderizarQuizRanking();
+    await renderizarQuizRanking(sessao.metadata.quiz_ranking_fake)
   } else {
     await renderizarQuizAguardando();
   }
