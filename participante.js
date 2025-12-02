@@ -253,20 +253,58 @@ async function renderizarPerguntas() {
   
   if (!palestraAtual) {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <p class="text-xl text-gray-600">Aguardando palestra...</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+  
+        <div></div>
+  
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl animate-pulse-slow">
+            <span class="text-6xl">🎤</span>
+          </div>
+  
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Aguardando<br>Palestra
+          </h2>
+        </div>
+  
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          A palestra será iniciada em instantes...
+        </p>
+  
       </div>
     `;
     return;
   }
-  
+
   if (!sessao.perguntas_abertas) {
     container.innerHTML = `
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">🔒</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">${esc(palestraAtual.nome)}</h2>
-        <p class="text-gray-600">${esc(palestraAtual.palestrante)}</p>
-        <p class="text-gray-500 mt-4">Perguntas fechadas no momento</p>
+      <div class="h-full flex flex-col items-center justify-between text-center px-6 py-10 animate-fadein">
+  
+        <div></div>
+  
+        <div class="flex flex-col items-center gap-6 animate-slideup">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-white/20 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">🔒</span>
+          </div>
+  
+          <h2 class="text-3xl font-extrabold text-gray-800 drop-shadow-sm">
+            Perguntas Fechadas
+          </h2>
+  
+          <p class="text-lg text-gray-700">
+            ${esc(palestraAtual.nome)}
+          </p>
+          <p class="text-md text-gray-600 -mt-4">
+            ${esc(palestraAtual.palestrante)}
+          </p>
+        </div>
+  
+        <p class="text-gray-700 text-md opacity-90 animate-fadein-slow">
+          O moderador ainda não liberou perguntas
+        </p>
+  
       </div>
     `;
     return;
@@ -277,9 +315,22 @@ async function renderizarPerguntas() {
   
   container.innerHTML = `
     <div>
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">${esc(palestraAtual.nome)}</h2>
-        <p class="text-gray-600">${esc(palestraAtual.palestrante)}</p>
+      <div class="flex flex-col items-center gap-4 text-center animate-fadein">
+        <div class="w-20 h-20 flex items-center justify-center rounded-2xl 
+                    bg-white/20 backdrop-blur-md shadow-xl animate-pulse-slow">
+          <span class="text-5xl">💬</span>
+        </div>
+      
+        <h2 class="text-2xl font-extrabold text-gray-800 drop-shadow-sm">
+          Pergunte ao Palestrante
+        </h2>
+      
+        <p class="text-md text-gray-700 -mt-2">
+          ${esc(palestraAtual.nome)}
+        </p>
+        <p class="text-sm text-gray-600">
+          ${esc(palestraAtual.palestrante)}
+        </p>
       </div>
       
       ${validacao.pode ? `
@@ -317,11 +368,18 @@ async function renderizarPerguntas() {
           </p>
         </form>
       ` : `
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p id="mensagemBloqueioPergunta" class="text-red-800 font-bold">
+        <div class="flex flex-col items-center gap-6 text-center px-4 py-10 animate-fadein">
+          <div class="w-24 h-24 flex items-center justify-center rounded-3xl 
+                      bg-red-100 backdrop-blur-md shadow-xl">
+            <span class="text-6xl">⛔</span>
+          </div>=
+          <h2 class="text-2xl font-extrabold text-red-700 drop-shadow-sm">
+            Limite Atingido
+          </h2>
+          <p id="mensagemBloqueioPergunta" class="text-red-700 font-semibold text-lg animate-fadein-slow">
             ⚠️ ${validacao.motivo}
           </p>
-        </div>
+      </div>
       `}
     </div>
   `;
