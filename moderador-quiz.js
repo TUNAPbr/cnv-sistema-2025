@@ -377,7 +377,11 @@ async function revelarResposta(perguntaId) {
       { p_pergunta_id: perguntaId }
     );
 
-    if (errStats) throw errStats;
+    // Verificação real
+    if (errStats || !stats || !stats.cnv_stats_pergunta_quiz) {
+        console.error("Erro RPC:", errStats, stats);
+        throw new Error("Falha ao buscar estatísticas da pergunta.");
+    }
 
     // 🔥 GUARDAR ESTATÍSTICA NA SESSÃO PARA O TELÃO/APP
     const { error: errSessao } = await supabase
@@ -385,7 +389,7 @@ async function revelarResposta(perguntaId) {
       .update({
         quiz_estado: 'resposta_revelada',
         metadata: {
-          quiz_stats: stats   // <<--- DADO DISPONÍVEL PARA O TELÃO
+          quiz_stats: stats.cnv_stats_pergunta_quiz   // <<--- DADO DISPONÍVEL PARA O TELÃO
         }
       })
       .eq('id', 1);
