@@ -81,6 +81,7 @@ async function inicializar() {
     // Atualizar UI
     atualizarBotoesModo();
     atualizarStatusModo();
+    atualizarBotaoQRCode();
     
     console.log('✅ Moderador inicializado');
     
