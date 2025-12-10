@@ -1081,6 +1081,7 @@ function renderizarQuizCountdown() {
 
 async function renderizarQuizPergunta() {
   const container = document.getElementById('participanteContainer');
+  window.inicioLocalQuiz = Date.now();
   
   // Carregar pergunta atual
   if (sessao.quiz_pergunta_atual_id) {
@@ -1293,7 +1294,7 @@ function renderizarQuizTempoEsgotado() {
 }
 
 async function responderQuiz(opcao) {
-  const tempoResposta = Math.floor((Date.now() - (window.inicioContagem || Date.now())) / 1000);
+  const tempoResposta = Math.floor((Date.now() - window.inicioLocalQuiz) / 1000);
   
   const statusEl = document.getElementById('statusQuizMensagem');
 
