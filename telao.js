@@ -222,6 +222,9 @@ async function renderizar() {
 
   // não mudou o modo → renderiza sem animação
   await renderizarModo();
+  
+  // Atualizar QR Code
+  renderizarQRCode();
 }
 
 
@@ -1004,6 +1007,31 @@ function mostrarErro(mensagem) {
       </div>
     </div>
   `;
+}
+
+// ============================================
+// QR CODE
+// ============================================
+
+function renderizarQRCode() {
+  const container = document.getElementById('qrcodeContainer');
+  if (!container) return;
+  
+  if (sessao?.mostrar_qrcode) {
+    container.classList.remove('hide');
+    container.classList.add('show');
+    container.style.display = 'block';
+    container.innerHTML = `
+      <img src="./qrcode.png" alt="QR Code">
+      <p>Acesse pelo celular</p>
+    `;
+  } else {
+    container.classList.remove('show');
+    container.classList.add('hide');
+    setTimeout(() => {
+      container.style.display = 'none';
+    }, 600);
+  }
 }
 
 // ============================================
