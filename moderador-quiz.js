@@ -1,4 +1,3 @@
-
 // ============================================
 // QUIZ: SELEÇÃO E CARREGAMENTO
 // ============================================
@@ -377,11 +376,13 @@ async function revelarResposta(perguntaId) {
       { p_pergunta_id: perguntaId }
     );
 
-    // Verificação real
-    if (errStats || !stats || !stats.cnv_stats_pergunta_quiz) {
+    // Verificação real - o Supabase RPC retorna diretamente no data, não em um objeto aninhado
+    if (errStats || !stats) {
         console.error("Erro RPC:", errStats, stats);
         throw new Error("Falha ao buscar estatísticas da pergunta.");
     }
+
+    console.log("📊 Estatísticas carregadas:", stats);
 
     // 🔥 GUARDAR ESTATÍSTICA NA SESSÃO PARA O TELÃO/APP
     const { error: errSessao } = await supabase
