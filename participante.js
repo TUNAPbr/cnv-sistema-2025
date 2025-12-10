@@ -1143,9 +1143,26 @@ async function renderizarQuizPergunta() {
   // Mostrar opções
   const tempoLimite = perguntaQuizAtual.tempo_limite_seg;
 
-  // Usar o horário REAL enviado pelo moderador
-  const inicio = new Date(sessao.metadata?.pergunta_inicio).getTime();
-  window.inicioContagem = inicio ?? Date.now();
+  // NOVO COUNTDOWN LOCAL (SEM SALTOS)
+  let tempo = tempoLimite;
+  
+  // grava o início LOCAL, não o início do servidor
+  const inicioLocal = Date.now();
+  
+  const intervalo = setInterval(() => {
+    tempo = tempoLimite - Math.floor((Date.now() - inicioLocal) / 1000);
+  
+    const el = document.getElementById("tempoRestante");
+    const barra = document.getElementById("barraProgresso");
+  
+    if (el) el.textContent = `${tempo}s`;
+    if (barra) barra.style.width = `${(tempo / tempoLimite) * 100}%`;
+  
+    if (tempo <= 0) {
+      clearInterval(intervalo);
+      renderizarQuizTempoEsgotado();
+    }
+  }, 1000);
   
   container.innerHTML = `
     <div class="h-full flex flex-col justify-between animate-fadein">
