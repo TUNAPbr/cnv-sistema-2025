@@ -678,3 +678,23 @@ async function carregarControleQuiz() {
   // Carregar detalhes do quiz
   await carregarQuizAtivo();
 }
+
+// ============================================
+// CONTROLE: aguardando 
+// ============================================
+
+async function toggleQRCode() {
+  const novoEstado = !sessaoAtual.mostrar_qrcode;
+  
+  const { error } = await supabase
+    .from('cnv_sessao')
+    .update({ mostrar_qrcode: novoEstado })
+    .eq('id', 1);
+  
+  if (error) {
+    alert('❌ Erro ao atualizar QR Code');
+    return;
+  }
+  
+  alert(`✅ QR Code ${novoEstado ? 'visível' : 'oculto'}`);
+}
