@@ -389,7 +389,7 @@ async function revelarResposta(perguntaId) {
       .update({
         quiz_estado: 'resposta_revelada',
         metadata: {
-          quiz_stats: stats.cnv_stats_pergunta_quiz   // <<--- DADO DISPONÍVEL PARA O TELÃO
+            quiz_stats: stats    // 🚀 stats JÁ contém os dados corretos!
         }
       })
       .eq('id', 1);
