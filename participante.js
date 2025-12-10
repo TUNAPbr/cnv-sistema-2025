@@ -1218,37 +1218,27 @@ async function renderizarQuizPergunta() {
     </div>
   `;
   
-  // Countdown visual
-  let tempo = tempoLimite;  
+  // NOVO COUNTDOWN LOCAL (SEM SALTOS)
+  let tempo = tempoLimite;
+  
+  // grava o início LOCAL, não o início do servidor
+  const inicioLocal = Date.now();
+  
   const intervalo = setInterval(() => {
-    const agora = Date.now();
-    tempo = tempoLimite - Math.floor((agora - inicio) / 1000);
-    const el = document.getElementById('tempoRestante');
-    const barra = document.getElementById('barraProgresso');
-    
+    tempo = tempoLimite - Math.floor((Date.now() - inicioLocal) / 1000);
+  
+    const el = document.getElementById("tempoRestante");
+    const barra = document.getElementById("barraProgresso");
+  
     if (el) el.textContent = `${tempo}s`;
-    if (barra) {
-      const percentual = (tempo / tempoLimite) * 100;
-      barra.style.width = `${percentual}%`;
-    }
-    
+    if (barra) barra.style.width = `${(tempo / tempoLimite) * 100}%`;
+  
     if (tempo <= 0) {
       clearInterval(intervalo);
-    
-      // desabilita botões
-      ['A','B','C','D'].forEach(letra=>{
-        const btn = document.getElementById(`btn${letra}`);
-        if (btn) {
-          btn.disabled = true;
-          btn.classList.add('opacity-70','cursor-not-allowed');
-        }
-      });
-    
-      // 👉 força tela de tempo esgotado imediatamente
       renderizarQuizTempoEsgotado();
-      return;
     }
   }, 1000);
+
 }
 
 function renderizarQuizTempoEsgotado() {
