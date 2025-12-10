@@ -446,6 +446,49 @@ async function forcarRefreshParticipantes() {
 }
 
 // ============================================
+// 8. CONTROLE DO QR CODE
+// ============================================
+
+async function toggleQRCode() {
+  try {
+    const novoEstado = !sessaoAtual?.mostrar_qrcode;
+    
+    const { data, error } = await supabase
+      .from('cnv_sessao')
+      .update({ mostrar_qrcode: novoEstado })
+      .eq('id', 1)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    sessaoAtual = data;
+    atualizarBotaoQRCode();
+    
+    alert(`✅ QR Code ${novoEstado ? 'visível' : 'oculto'} no telão`);
+    
+  } catch (error) {
+    console.error('Erro ao toggle QR Code:', error);
+    alert('❌ Erro ao atualizar QR Code');
+  }
+}
+
+function atualizarBotaoQRCode() {
+  const btn = document.getElementById('btnQRCode');
+  if (!btn) return;
+  
+  if (sessaoAtual?.mostrar_qrcode) {
+    btn.innerHTML = '🙈 Ocultar QR';
+    btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+    btn.classList.add('bg-green-600', 'hover:bg-green-700');
+  } else {
+    btn.innerHTML = '📱 Mostrar QR';
+    btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+    btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+  }
+}
+
+// ============================================
 // CONTINUA NOS PRÓXIMOS ARQUIVOS...
 // ============================================
 
