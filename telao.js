@@ -823,9 +823,11 @@ async function renderizarQuizResultado() {
     p_pergunta_id: perguntaQuizAtual.id
   });
   
-  const distribuicao = stats?.distribuicao || {};
-  const totalRespostas = stats?.total_respostas || 0;
-  const percentualAcerto = stats?.percentual_acerto || 0;
+  const s = stats?.cnv_stats_pergunta_quiz || {};
+  
+  const distribuicao = s.distribuicao || {};
+  const totalRespostas = s.total_respostas || 0;
+  const percentualAcerto = s.percentual_acerto || 0;
   
   const opcoes = {
     'A': perguntaQuizAtual.opcao_a,
