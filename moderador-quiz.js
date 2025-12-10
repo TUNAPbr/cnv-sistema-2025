@@ -363,32 +363,46 @@ async function revelarResposta(perguntaId) {
   if (!confirm('Revelar resposta correta?')) return;
   
   try {
-    // Marcar como revelada
+    // Marca pergunta como revelada
     const { error: errPerg } = await supabase
       .from('cnv_quiz_perguntas')
       .update({ revelada: true })
       .eq('id', perguntaId);
     
     if (errPerg) throw errPerg;
-    
-    // Atualizar sessão
+
+    // 🔥 BUSCAR ESTATÍSTICAS COMPLETAS DA PERGUNTA (RPC NOVO)
+    const { data: stats, error: errStats } = await supabase.rpc(
+      'cnv_stats_pergunta_quiz',
+      { p_pergunta_id: perguntaId }
+    );
+
+    if (errStats) throw errStats;
+
+    // 🔥 GUARDAR ESTATÍSTICA NA SESSÃO PARA O TELÃO/APP
     const { error: errSessao } = await supabase
       .from('cnv_sessao')
-      .update({ quiz_estado: 'resposta_revelada' })
+      .update({
+        quiz_estado: 'resposta_revelada',
+        metadata: {
+          quiz_stats: stats   // <<--- DADO DISPONÍVEL PARA O TELÃO
+        }
+      })
       .eq('id', 1);
-    
+
     if (errSessao) throw errSessao;
-    
+
     alert('✅ Resposta revelada!');
     
-    // Atualizar ranking
+    // Atualiza ranking do quiz geral
     await carregarRankingQuiz();
-    
+
   } catch (error) {
     console.error('Erro ao revelar resposta:', error);
     alert('❌ Erro ao revelar resposta');
   }
 }
+
 
 async function finalizarQuiz() {
   if (!confirm('Finalizar quiz? Não será possível jogar mais perguntas.')) return;
