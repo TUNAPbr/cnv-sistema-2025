@@ -783,22 +783,20 @@ async function renderizarQuizPergunta() {
 
   // TIMER REGRESSIVO
   let tempo = tempoLimite;
+  const inicioLocal = Date.now();
+  
   const intervalo = setInterval(() => {
-    tempo--;
-    const el = document.getElementById('tempoRestante');
+    tempo = tempoLimite - Math.floor((Date.now() - inicioLocal) / 1000);
+  
+    const el = document.getElementById("tempoRestante");
     if (el) {
-      const span = el.querySelector('span');
+      const span = el.querySelector("span");
       if (span) span.textContent = `${tempo}s`;
-
-      if (tempo <= 5) {
-        el.classList.remove('ocean-text');
-        el.classList.add('text-yellow-400', 'countdown-display');
-      }
     }
-    if (tempo <= 0) {
-      clearInterval(intervalo);
-    }
+  
+    if (tempo <= 0) clearInterval(intervalo);
   }, 1000);
+
 }
 
 function renderizarQuizTempoEsgotado() {
