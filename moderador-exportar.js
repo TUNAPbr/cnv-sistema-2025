@@ -38,7 +38,7 @@ async function exportarPerguntas() {
   const palestra = palestras.find(p => p.id === palestraId);
   
   try {
-    const { data, error } = await supabase.rpc('cnv_exportar_perguntas', {
+    const { data, error } = await supabaseModerador.rpc('cnv_exportar_perguntas', {
       p_palestra_id: palestraId
     });
     
@@ -94,7 +94,7 @@ async function exportarEnquete() {
   const enquete = enquetes.find(e => e.id === enqueteId);
   
   try {
-    const { data, error } = await supabase.rpc('cnv_exportar_enquete', {
+    const { data, error } = await supabaseModerador.rpc('cnv_exportar_enquete', {
       p_enquete_id: enqueteId
     });
     
@@ -202,7 +202,7 @@ async function salvarConfig(event) {
   };
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_config')
       .update(dados)
       .eq('id', 1);
