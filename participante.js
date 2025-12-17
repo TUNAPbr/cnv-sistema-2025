@@ -45,7 +45,7 @@ function normalizarOpcoesEnquete(raw) {
 // CONFIGURAÇÃO SUPABASE
 // ============================================
 
-const supabase = window.supabaseClient;
+
 
 // ============================================
 // ESTADO GLOBAL
