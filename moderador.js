@@ -7,26 +7,32 @@
 // 1. CONFIGURAÇÃO SUPABASE
 // ============================================
 
-// Função para obter o cliente Supabase com verificação
-function getSupabaseClient() {
+// Garantir que o cliente Supabase está disponível
+let supabase;
+
+function inicializarSupabase() {
   if (window.supabaseClient) {
-    return window.supabaseClient;
+    supabase = window.supabaseClient;
+    return true;
   }
   
-  // Tentar criar se ainda não existe
   if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
     window.supabaseClient = window.supabase.createClient(
       window.SUPABASE_URL,
       window.SUPABASE_ANON_KEY
     );
+    supabase = window.supabaseClient;
     console.log('✅ Supabase client criado no moderador.js');
-    return window.supabaseClient;
+    return true;
   }
   
-  throw new Error('Supabase não está disponível. Verifique se a biblioteca foi carregada corretamente.');
+  return false;
 }
 
-const supabase = getSupabaseClient();
+// Tentar inicializar imediatamente
+if (!inicializarSupabase()) {
+  console.warn('⚠️ Aguardando Supabase...');
+}
 
 // ============================================
 // 2. ESTADO GLOBAL
@@ -81,23 +87,14 @@ async function inicializar() {
   // Aguardar um pouco para garantir que o Supabase foi carregado
   await new Promise(resolve => setTimeout(resolve, 100));
   
-  // Verificar se o Supabase está disponível
-  if (!window.supabase) {
+  // Tentar inicializar Supabase novamente
+  if (!supabase && !inicializarSupabase()) {
     console.error('❌ Biblioteca Supabase não carregada');
     alert('Erro: Biblioteca Supabase não foi carregada. Recarregue a página.');
     return;
   }
   
   try {
-    // Garantir que o cliente está inicializado
-    if (!window.supabaseClient) {
-      window.supabaseClient = window.supabase.createClient(
-        window.SUPABASE_URL,
-        window.SUPABASE_ANON_KEY
-      );
-      console.log('✅ Cliente Supabase inicializado');
-    }
-    
     // Carregar configuração
     await carregarConfig();
     
@@ -125,7 +122,7 @@ async function inicializar() {
     
   } catch (error) {
     console.error('❌ Erro ao inicializar:', error);
-    alert('Erro ao inicializar sistema: ' + error.message + '\n\nVerifique as credenciais do Supabase e recarregue a página.');
+    alert('Erro ao inicializar sistema: ' + error.message + '\n\nVerifique as credenciais do Supabase.');
   }
 }
 
