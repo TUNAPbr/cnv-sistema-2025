@@ -110,7 +110,7 @@ function selecionarPalestraParaPerguntas() {
 async function ativarPalestraPerguntas(palestraId) {
   try {
     // Atualiza no Supabase e retorna linha atualizada
-    const { data, error } = await supabase
+    const { data, error } = await supabaseModerador
       .from("cnv_sessao")
       .update({
         palestra_ativa_id: palestraId,
@@ -141,7 +141,7 @@ async function ativarPalestraPerguntas(palestraId) {
 
 async function abrirPerguntasParticipantes() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseModerador
       .from('cnv_sessao')
       .update({ perguntas_abertas: true })
       .eq('id', 1)
@@ -164,7 +164,7 @@ async function abrirPerguntasParticipantes() {
 
 async function fecharPerguntasParticipantes() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseModerador
       .from('cnv_sessao')
       .update({ perguntas_abertas: false })
       .eq('id', 1)
@@ -193,7 +193,7 @@ async function carregarPerguntasRecebidas() {
     return;
   }
   
-  const { data, error } = await supabase
+  const { data, error } = await supabaseModerador
     .from('cnv_perguntas')
     .select('*')
     .eq('palestra_id', sessaoAtual.palestra_ativa_id)
@@ -288,7 +288,7 @@ async function salvarEdicaoPergunta(event, id) {
   const novaPergunta = document.getElementById('perguntaTexto').value.trim();
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_perguntas')
       .update({ 
         pergunta: novaPergunta,
@@ -316,7 +316,7 @@ async function exibirPerguntaNoTelao(id) {
 
     if (jaExibida) {
       // 🔹 Se já está no telão, eu APENAS oculto
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_perguntas')
         .update({ exibida_no_telao: false })
         .eq('id', id);
@@ -325,14 +325,14 @@ async function exibirPerguntaNoTelao(id) {
     } else {
       // 🔹 Se ainda NÃO está no telão, faço o fluxo atual:
       // limpa todas da palestra e marca só essa
-      const { error: clearError } = await supabase
+      const { error: clearError } = await supabaseModerador
         .from('cnv_perguntas')
         .update({ exibida_no_telao: false })
         .eq('palestra_id', sessaoAtual.palestra_ativa_id);
 
       if (clearError) throw clearError;
 
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_perguntas')
         .update({ exibida_no_telao: true })
         .eq('id', id);
@@ -353,7 +353,7 @@ async function deletarPerguntaRecebida(id) {
   if (!confirm('Excluir esta pergunta?')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_perguntas')
       .update({ deletada: true })
       .eq('id', id);
@@ -375,7 +375,7 @@ async function togglePerguntaRespondida(id) {
   const novaFlag = !pergunta.respondida;
 
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_perguntas')
       .update({ 
         respondida: novaFlag,
@@ -483,7 +483,7 @@ function selecionarEnquete() {
 
 async function ativarEnquete(enqueteId) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_sessao')
       .update({
         enquete_ativa_id: enqueteId,
@@ -505,7 +505,7 @@ async function ativarEnquete(enqueteId) {
 
 async function abrirVotacaoEnquete() {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_sessao')
       .update({ 
         enquete_votacao_aberta: true,
@@ -525,7 +525,7 @@ async function abrirVotacaoEnquete() {
 
 async function fecharVotacaoEnquete() {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_sessao')
       .update({ enquete_votacao_aberta: false })
       .eq('id', 1);
@@ -544,7 +544,7 @@ async function toggleResultadoEnquete() {
   try {
     const novoValor = !sessaoAtual.enquete_mostrar_resultado;
     
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_sessao')
       .update({ enquete_mostrar_resultado: novoValor })
       .eq('id', 1);
@@ -574,7 +574,7 @@ async function zerarEnqueteAtual() {
     const enqueteId = sessaoAtual.enquete_ativa_id;
 
     // 1) Apagar todos os votos da enquete
-    const { error: errVotos } = await supabase
+    const { error: errVotos } = await supabaseModerador
       .from('cnv_enquete_votos')
       .delete()
       .eq('enquete_id', enqueteId);
@@ -582,7 +582,7 @@ async function zerarEnqueteAtual() {
     if (errVotos) throw errVotos;
 
     // 2) Resetar flags da sessão (fecha votação e esconde resultado)
-    const { data, error: errSessao } = await supabase
+    const { data, error: errSessao } = await supabaseModerador
       .from('cnv_sessao')
       .update({
         enquete_votacao_aberta: false,
@@ -616,7 +616,7 @@ async function carregarResultadoEnquete() {
     return;
   }
   
-  const { data, error } = await supabase.rpc('cnv_resultado_enquete', {
+  const { data, error } = await supabaseModerador.rpc('cnv_resultado_enquete', {
     p_enquete_id: sessaoAtual.enquete_ativa_id
   });
   
