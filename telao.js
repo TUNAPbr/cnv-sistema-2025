@@ -79,17 +79,17 @@ function normalizarOpcoesEnquete(raw) {
 // CONFIGURAÇÃO SUPABASE
 // ============================================
 
-let supabase = null;
+let supabaseTelao = null;
 
 // Aguardar Supabase estar pronto
 function aguardarSupabase() {
   return new Promise((resolve) => {
     if (window.supabaseClient) {
-      supabase = window.supabaseClient;
+      supabaseTelao = window.supabaseClient;
       resolve();
     } else {
       window.addEventListener('supabaseReady', () => {
-        supabase = window.supabaseClient;
+        supabaseTelao = window.supabaseClient;
         resolve();
       }, { once: true });
       
@@ -97,7 +97,7 @@ function aguardarSupabase() {
       let tentativas = 0;
       const intervalo = setInterval(() => {
         if (window.supabaseClient) {
-          supabase = window.supabaseClient;
+          supabaseTelao = window.supabaseClient;
           clearInterval(intervalo);
           resolve();
         } else if (++tentativas > 50) {
@@ -136,7 +136,7 @@ async function inicializar() {
     // Aguardar Supabase estar pronto
     await aguardarSupabase();
     
-    if (!supabase) {
+    if (!supabaseTelao) {
       throw new Error('Supabase não está disponível');
     }
     
@@ -156,7 +156,7 @@ async function inicializar() {
 }
 
 async function carregarConfig() {
-  const { data } = await supabase
+  const { data } = await supabaseTelao
     .from('cnv_config')
     .select('*')
     .eq('id', 1)
@@ -171,7 +171,7 @@ async function carregarConfig() {
 }
 
 async function carregarSessao() {
-  const { data } = await supabase
+  const { data } = await supabaseTelao
     .from('cnv_sessao')
     .select('*')
     .eq('id', 1)
@@ -186,10 +186,10 @@ async function carregarSessao() {
 
 async function conectarRealtime() {
   if (canal) {
-    await supabase.removeChannel(canal);
+    await supabaseTelao.removeChannel(canal);
   }
   
-  canal = supabase
+  canal = supabaseTelao
     .channel('telao')
     .on('postgres_changes', {
       event: 'UPDATE',
@@ -334,7 +334,7 @@ async function renderizarPerguntas() {
   
   // Carregar palestra
   if (sessao.palestra_ativa_id && (!palestraAtual || palestraAtual.id !== sessao.palestra_ativa_id)) {
-    const { data } = await supabase
+    const { data } = await supabaseTelao
       .from('cnv_palestras')
       .select('*')
       .eq('id', sessao.palestra_ativa_id)
@@ -349,7 +349,7 @@ async function renderizarPerguntas() {
   }
   
   // Verificar se tem pergunta para exibir
-  const { data: pergunta } = await supabase
+  const { data: pergunta } = await supabaseTelao
     .from('cnv_perguntas')
     .select('*')
     .eq('palestra_id', palestraAtual.id)
@@ -402,7 +402,7 @@ async function renderizarPerguntas() {
   } else {
 
     // 🔥 NOVO: buscar total de perguntas no Supabase
-    const { data: listaPerguntas } = await supabase
+    const { data: listaPerguntas } = await supabaseTelao
     .from('cnv_perguntas')
     .select('id')
     .eq('palestra_id', palestraAtual.id)
@@ -465,7 +465,7 @@ async function renderizarEnquetes() {
   
   // Carregar enquete ativa
   if (sessao.enquete_ativa_id && (!enqueteAtual || enqueteAtual.id !== sessao.enquete_ativa_id)) {
-    const { data } = await supabase
+    const { data } = await supabaseTelao
       .from('cnv_enquetes')
       .select('*')
       .eq('id', sessao.enquete_ativa_id)
@@ -489,7 +489,7 @@ async function renderizarEnquetes() {
   // MODO: MOSTRAR RESULTADO
   // =====================================================================
   if (sessao.enquete_mostrar_resultado) {
-    const { data: resultado } = await supabase.rpc('cnv_resultado_enquete', {
+    const { data: resultado } = await supabaseTelao.rpc('cnv_resultado_enquete', {
       p_enquete_id: enqueteAtual.id
     });
 
@@ -584,7 +584,7 @@ async function renderizarEnquetes() {
   // =====================================================================
 
   // Buscar total de votos para o badge
-  const { data: resultadoContagem } = await supabase.rpc('cnv_resultado_enquete', {
+  const { data: resultadoContagem } = await supabaseTelao.rpc('cnv_resultado_enquete', {
     p_enquete_id: enqueteAtual.id
   });
 
@@ -647,7 +647,7 @@ async function renderizarEnquetes() {
 
 async function renderizarQuiz() {
   if (sessao.quiz_ativo_id && (!quizAtual || quizAtual.id !== sessao.quiz_ativo_id)) {
-    const { data } = await supabase
+    const { data } = await supabaseTelao
       .from('cnv_quizzes')
       .select('*')
       .eq('id', sessao.quiz_ativo_id)
@@ -686,7 +686,7 @@ async function renderizarQuiz() {
 async function renderizarQuizCadastro() {
   const container = document.getElementById('telaoContainer');
   
-  const { data: participantes } = await supabase
+  const { data: participantes } = await supabaseTelao
     .from('cnv_quiz_participantes')
     .select('nome')
     .eq('quiz_id', quizAtual.id)
@@ -755,7 +755,7 @@ async function renderizarQuizPergunta() {
   
   // Carregar pergunta atual
   if (sessao.quiz_pergunta_atual_id) {
-    const { data } = await supabase
+    const { data } = await supabaseTelao
       .from('cnv_quiz_perguntas')
       .select('*')
       .eq('id', sessao.quiz_pergunta_atual_id)
@@ -861,7 +861,7 @@ async function renderizarQuizResultado() {
   if (!perguntaQuizAtual) return;
   
   // Buscar estatísticas agregadas da pergunta
-  const { data: stats } = await supabase.rpc('cnv_stats_pergunta_quiz', {
+  const { data: stats } = await supabaseTelao.rpc('cnv_stats_pergunta_quiz', {
     p_pergunta_id: perguntaQuizAtual.id
   });
   
@@ -961,7 +961,7 @@ async function renderizarQuizResultado() {
 async function renderizarQuizRanking() {
   const container = document.getElementById('telaoContainer');
   
-  const { data: ranking } = await supabase.rpc('cnv_ranking_quiz', {
+  const { data: ranking } = await supabaseTelao.rpc('cnv_ranking_quiz', {
     p_quiz_id: quizAtual.id
   });
   
