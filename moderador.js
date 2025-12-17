@@ -7,7 +7,26 @@
 // 1. CONFIGURAÇÃO SUPABASE
 // ============================================
 
-const supabase = window.supabaseClient;
+// Função para obter o cliente Supabase com verificação
+function getSupabaseClient() {
+  if (window.supabaseClient) {
+    return window.supabaseClient;
+  }
+  
+  // Tentar criar se ainda não existe
+  if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+    window.supabaseClient = window.supabase.createClient(
+      window.SUPABASE_URL,
+      window.SUPABASE_ANON_KEY
+    );
+    console.log('✅ Supabase client criado no moderador.js');
+    return window.supabaseClient;
+  }
+  
+  throw new Error('Supabase não está disponível. Verifique se a biblioteca foi carregada corretamente.');
+}
+
+const supabase = getSupabaseClient();
 
 // ============================================
 // 2. ESTADO GLOBAL
@@ -59,7 +78,26 @@ function agendarAtualizarResultadoEnquete() {
 async function inicializar() {
   console.log('🚀 Inicializando moderador...');
   
+  // Aguardar um pouco para garantir que o Supabase foi carregado
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Verificar se o Supabase está disponível
+  if (!window.supabase) {
+    console.error('❌ Biblioteca Supabase não carregada');
+    alert('Erro: Biblioteca Supabase não foi carregada. Recarregue a página.');
+    return;
+  }
+  
   try {
+    // Garantir que o cliente está inicializado
+    if (!window.supabaseClient) {
+      window.supabaseClient = window.supabase.createClient(
+        window.SUPABASE_URL,
+        window.SUPABASE_ANON_KEY
+      );
+      console.log('✅ Cliente Supabase inicializado');
+    }
+    
     // Carregar configuração
     await carregarConfig();
     
@@ -87,7 +125,7 @@ async function inicializar() {
     
   } catch (error) {
     console.error('❌ Erro ao inicializar:', error);
-    alert('Erro ao inicializar sistema. Verifique as credenciais do Supabase.');
+    alert('Erro ao inicializar sistema: ' + error.message + '\n\nVerifique as credenciais do Supabase e recarregue a página.');
   }
 }
 
