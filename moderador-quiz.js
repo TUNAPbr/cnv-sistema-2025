@@ -28,7 +28,7 @@ function selecionarQuiz() {
 
 async function ativarQuiz(quizId) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_sessao')
       .update({
         quiz_ativo_id: quizId,
@@ -53,7 +53,7 @@ async function carregarQuizAtivo() {
   if (!sessaoAtual?.quiz_ativo_id) return;
   
   // Carregar dados do quiz
-  const { data: quiz, error: errQuiz } = await supabase
+  const { data: quiz, error: errQuiz } = await supabaseModerador
     .from('cnv_quizzes')
     .select('*')
     .eq('id', sessaoAtual.quiz_ativo_id)
@@ -67,7 +67,7 @@ async function carregarQuizAtivo() {
   quizAtual = quiz;
   
   // Carregar perguntas
-  const { data: perguntas, error: errPerg } = await supabase
+  const { data: perguntas, error: errPerg } = await supabaseModerador
     .from('cnv_quiz_perguntas')
     .select('*')
     .eq('quiz_id', quiz.id)
@@ -162,7 +162,7 @@ async function carregarParticipantesQuiz() {
   const participantesDiv = document.getElementById('controleParticipantesQuiz');
   if (!participantesDiv || !quizAtual) return;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseModerador
     .from('cnv_quiz_participantes')
     .select('*')
     .eq('quiz_id', quizAtual.id)
@@ -258,7 +258,7 @@ async function iniciarCadastroNomes() {
   
   try {
     // Atualizar quiz
-    const { error: errQuiz } = await supabase
+    const { error: errQuiz } = await supabaseModerador
       .from('cnv_quizzes')
       .update({ status: 'em_andamento', iniciado_em: new Date().toISOString() })
       .eq('id', quizAtual.id);
@@ -266,7 +266,7 @@ async function iniciarCadastroNomes() {
     if (errQuiz) throw errQuiz;
     
     // Atualizar sessão
-    const { error: errSessao } = await supabase
+    const { error: errSessao } = await supabaseModerador
       .from('cnv_sessao')
       .update({ quiz_estado: 'cadastro_nomes' })
       .eq('id', 1);
@@ -285,7 +285,7 @@ async function fecharCadastroIniciarQuiz() {
   if (!confirm('Fechar cadastro e iniciar quiz? Quem não cadastrou NÃO poderá participar.')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_sessao')
       .update({ quiz_estado: 'aguardando_inicio' })
       .eq('id', 1);
@@ -308,7 +308,7 @@ async function jogarPergunta(perguntaId) {
   
   try {
     // Marcar como jogada
-    const { error: errPerg } = await supabase
+    const { error: errPerg } = await supabaseModerador
       .from('cnv_quiz_perguntas')
       .update({ jogada: true })
       .eq('id', perguntaId);
@@ -316,7 +316,7 @@ async function jogarPergunta(perguntaId) {
     if (errPerg) throw errPerg;
     
     // Atualizar sessão para countdown 3s
-    const { error: errSessao } = await supabase
+    const { error: errSessao } = await supabaseModerador
       .from('cnv_sessao')
       .update({
         quiz_estado: 'countdown_3s',
@@ -329,7 +329,7 @@ async function jogarPergunta(perguntaId) {
     
     // Após 3 segundos, mudar para jogando_pergunta
     setTimeout(async () => {
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_sessao')
         .update({
           quiz_estado: 'jogando_pergunta',
@@ -342,7 +342,7 @@ async function jogarPergunta(perguntaId) {
     
     // Após tempo_limite, mudar para tempo_esgotado
     setTimeout(async () => {
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_sessao')
         .update({ quiz_estado: 'tempo_esgotado' })
         .eq('id', 1);
@@ -363,7 +363,7 @@ async function revelarResposta(perguntaId) {
   
   try {
     // Marca pergunta como revelada
-    const { error: errPerg } = await supabase
+    const { error: errPerg } = await supabaseModerador
       .from('cnv_quiz_perguntas')
       .update({ revelada: true })
       .eq('id', perguntaId);
@@ -371,7 +371,7 @@ async function revelarResposta(perguntaId) {
     if (errPerg) throw errPerg;
 
     // 🔥 BUSCAR ESTATÍSTICAS COMPLETAS DA PERGUNTA (RPC NOVO)
-    const { data: stats, error: errStats } = await supabase.rpc(
+    const { data: stats, error: errStats } = await supabaseModerador.rpc(
       'cnv_stats_pergunta_quiz',
       { p_pergunta_id: perguntaId }
     );
@@ -385,7 +385,7 @@ async function revelarResposta(perguntaId) {
     console.log("📊 Estatísticas carregadas:", stats);
 
     // 🔥 GUARDAR ESTATÍSTICA NA SESSÃO PARA O TELÃO/APP
-    const { error: errSessao } = await supabase
+    const { error: errSessao } = await supabaseModerador
       .from('cnv_sessao')
       .update({
         quiz_estado: 'resposta_revelada',
@@ -413,7 +413,7 @@ async function finalizarQuiz() {
   if (!confirm('Finalizar quiz? Não será possível jogar mais perguntas.')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_quizzes')
       .update({
         status: 'finalizado',
@@ -440,7 +440,7 @@ async function reiniciarQuiz() {
     
     // Apagar respostas
     if (pergIds.length > 0) {
-      const { error: errResp } = await supabase
+      const { error: errResp } = await supabaseModerador
         .from('cnv_quiz_respostas')
         .delete()
         .in('quiz_pergunta_id', pergIds);
@@ -449,7 +449,7 @@ async function reiniciarQuiz() {
     }
     
     // Apagar participantes
-    const { error: errPart } = await supabase
+    const { error: errPart } = await supabaseModerador
       .from('cnv_quiz_participantes')
       .delete()
       .eq('quiz_id', quizAtual.id);
@@ -457,7 +457,7 @@ async function reiniciarQuiz() {
     if (errPart) throw errPart;
     
     // Resetar perguntas
-    const { error: errPerg } = await supabase
+    const { error: errPerg } = await supabaseModerador
       .from('cnv_quiz_perguntas')
       .update({ jogada: false, revelada: false })
       .eq('quiz_id', quizAtual.id);
@@ -465,7 +465,7 @@ async function reiniciarQuiz() {
     if (errPerg) throw errPerg;
     
     // Resetar quiz
-    const { error: errQuiz } = await supabase
+    const { error: errQuiz } = await supabaseModerador
       .from('cnv_quizzes')
       .update({
         status: 'preparando',
@@ -477,7 +477,7 @@ async function reiniciarQuiz() {
     if (errQuiz) throw errQuiz;
     
     // Resetar sessão
-    const { error: errSessao } = await supabase
+    const { error: errSessao } = await supabaseModerador
       .from('cnv_sessao')
       .update({
         quiz_estado: 'aguardando_inicio',
@@ -501,7 +501,7 @@ async function toggleRankingTelao() {
   try {
     const novoValor = !sessaoAtual.quiz_mostrar_ranking;
     
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_sessao')
       .update({
         quiz_estado: novoValor ? 'ranking' : 'aguardando_inicio',
@@ -527,7 +527,7 @@ async function carregarRankingQuiz() {
     return;
   }
   
-  const { data, error } = await supabase.rpc('cnv_ranking_quiz', {
+  const { data, error } = await supabaseModerador.rpc('cnv_ranking_quiz', {
     p_quiz_id: quizAtual.id
   });
   
@@ -570,7 +570,7 @@ async function carregarRankingQuiz() {
 async function toggleRankingFake() {
   const novoValor = !sessaoAtual.quiz_mostrar_ranking_fake;
 
-  const { error } = await supabase
+  const { error } = await supabaseModerador
     .from('cnv_sessao')
     .update({
       quiz_mostrar_ranking_fake: novoValor,
@@ -582,7 +582,7 @@ async function toggleRankingFake() {
 }
 
 async function dispararRankingIndividual() {
-  await supabase
+  await supabaseModerador
     .from('cnv_sessao')
     .update({
       metadata: { refresh_token: crypto.randomUUID() }
@@ -652,7 +652,7 @@ async function salvarEdicaoQuiz(event, id) {
   const nome = document.getElementById('quizTituloEditar').value.trim();
   const status = document.getElementById('quizStatusEditar').value;
 
-  const { error } = await supabase
+  const { error } = await supabaseModerador
     .from('cnv_quizzes')
     .update({ nome, status })
     .eq('id', id);
@@ -679,7 +679,7 @@ async function abrirModalGerenciarQuiz(quiz) {
     quizAtual = quiz;
 
     // Carrega as perguntas desse quiz independentemente da sessão
-    const { data: perguntas, error } = await supabase
+    const { data: perguntas, error } = await supabaseModerador
       .from('cnv_quiz_perguntas')
       .select('*')
       .eq('quiz_id', quiz.id)
@@ -833,7 +833,7 @@ async function salvarPerguntaQuiz(event, id = null) {
       delete dados.quiz_id;
       delete dados.ordem;
       
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_quiz_perguntas')
         .update(dados)
         .eq('id', id);
@@ -842,14 +842,14 @@ async function salvarPerguntaQuiz(event, id = null) {
       alert('✅ Pergunta atualizada!');
     } else {
       // Criar
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_quiz_perguntas')
         .insert(dados);
       
       if (error) throw error;
       
       // Atualizar total de perguntas
-      await supabase
+      await supabaseModerador
         .from('cnv_quizzes')
         .update({ total_perguntas: perguntasQuiz.length + 1 })
         .eq('id', quizAtual.id);
@@ -975,14 +975,14 @@ async function deletarPerguntaQuiz(id) {
   if (!confirm('Excluir esta pergunta?')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_quiz_perguntas')
       .delete()
       .eq('id', id);
     
     if (error) throw error;
     
-    await supabase
+    await supabaseModerador
       .from('cnv_quizzes')
       .update({ total_perguntas: Math.max(0, perguntasQuiz.length - 1) })
       .eq('id', quizAtual.id);
