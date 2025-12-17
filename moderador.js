@@ -7,7 +7,6 @@
 // 1. CONFIGURAÇÃO SUPABASE
 // ============================================
 
-const supabase = window.supabaseClient;
 
 // ============================================
 // 2. ESTADO GLOBAL
