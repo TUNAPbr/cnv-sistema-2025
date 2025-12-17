@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste Supabase - CNV 2025</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .log {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 10px 0;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .info { color: blue; }
+  </style>
+</head>
+
+<body>
+  <h1>🔍 Teste de Conexão Supabase</h1>
+  <div id="logs" class="log">Aguardando testes...</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    const logsDiv = document.getElementById('logs');
+    
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type;
+      logsDiv.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+      console.log(message);
+    }
+
+    async function testar() {
+      log('=== INICIANDO TESTES ===', 'info');
+      
+      // Teste 1: Verificar se o CDN carregou
+      log('\n📦 Teste 1: Biblioteca Supabase CDN', 'info');
+      if (typeof window.supabase === 'undefined') {
+        log('❌ ERRO: window.supabase não está definido!', 'error');
+        log('   O CDN não carregou. Verifique sua conexão de internet.', 'error');
+        return;
+      } else {
+        log('✅ window.supabase está disponível', 'success');
+      }
+
+      // Teste 2: Verificar se createClient existe
+      log('\n🔧 Teste 2: Método createClient', 'info');
+      if (typeof window.supabase.createClient !== 'function') {
+        log('❌ ERRO: window.supabase.createClient não é uma função!', 'error');
+        return;
+      } else {
+        log('✅ window.supabase.createClient está disponível', 'success');
+      }
+
+      // Teste 3: Criar cliente
+      log('\n🔗 Teste 3: Criar cliente Supabase', 'info');
+      try {
+        const SUPABASE_URL = 'https://qsztainariaiznbblrap.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzenRhaW5hcmlhaXpuYmJscmFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MDQ1MDUsImV4cCI6MjA3OTQ4MDUwNX0.y9RYzXjnPaNo6Mbi_76W_MFBXHjpXmj-rvkvLYkIP4k';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        if (!supabaseClient) {
+          log('❌ ERRO: Cliente retornou null/undefined', 'error');
+          return;
+        }
+        
+        log('✅ Cliente Supabase criado com sucesso', 'success');
+        log(`   Tipo: ${typeof supabaseClient}`, 'info');
+        log(`   Tem .from()? ${typeof supabaseClient.from === 'function' ? 'SIM' : 'NÃO'}`, 'info');
+
+        // Teste 4: Fazer uma query de teste
+        log('\n📊 Teste 4: Query de teste (cnv_config)', 'info');
+        
+        const { data, error } = await supabaseClient
+          .from('cnv_config')
+          .select('*')
+          .eq('id', 1)
+          .single();
+        
+        if (error) {
+          log(`❌ ERRO na query: ${error.message}`, 'error');
+          log(`   Código: ${error.code}`, 'error');
+          log(`   Detalhes: ${error.details}`, 'error');
+        } else {
+          log('✅ Query executada com sucesso!', 'success');
+          log(`   Dados recebidos: ${JSON.stringify(data, null, 2)}`, 'success');
+        }
+
+      } catch (error) {
+        log(`❌ EXCEÇÃO: ${error.message}`, 'error');
+        log(`   Stack: ${error.stack}`, 'error');
+      }
+
+      log('\n=== TESTES CONCLUÍDOS ===', 'info');
+    }
+
+    // Executar testes quando a página carregar
+    window.addEventListener('load', () => {
+      setTimeout(testar, 500);
+    });
+  </script>
+</body>
+</html>
