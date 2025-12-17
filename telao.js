@@ -79,6 +79,36 @@ function normalizarOpcoesEnquete(raw) {
 // CONFIGURAÇÃO SUPABASE
 // ============================================
 
+let supabase = null;
+
+// Aguardar Supabase estar pronto
+function aguardarSupabase() {
+  return new Promise((resolve) => {
+    if (window.supabaseClient) {
+      supabase = window.supabaseClient;
+      resolve();
+    } else {
+      window.addEventListener('supabaseReady', () => {
+        supabase = window.supabaseClient;
+        resolve();
+      }, { once: true });
+      
+      // Fallback: tentar a cada 100ms por até 5 segundos
+      let tentativas = 0;
+      const intervalo = setInterval(() => {
+        if (window.supabaseClient) {
+          supabase = window.supabaseClient;
+          clearInterval(intervalo);
+          resolve();
+        } else if (++tentativas > 50) {
+          clearInterval(intervalo);
+          console.error('❌ Timeout: Supabase não carregou');
+          resolve();
+        }
+      }, 100);
+    }
+  });
+}
 
 // ============================================
 // ESTADO GLOBAL
@@ -103,6 +133,15 @@ async function inicializar() {
   console.log('🖥️ Inicializando telão...');
   
   try {
+    // Aguardar Supabase estar pronto
+    await aguardarSupabase();
+    
+    if (!supabase) {
+      throw new Error('Supabase não está disponível');
+    }
+    
+    console.log('✅ Supabase conectado');
+    
     await carregarConfig();
     await carregarSessao();
     await conectarRealtime();
