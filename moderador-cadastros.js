@@ -129,7 +129,7 @@ async function salvarPalestra(event, id) {
   try {
     if (id) {
       // Editar
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_palestras')
         .update(dados)
         .eq('id', id);
@@ -138,7 +138,7 @@ async function salvarPalestra(event, id) {
       alert('✅ Palestra atualizada!');
     } else {
       // Criar
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_palestras')
         .insert(dados);
       
@@ -163,7 +163,7 @@ async function deletarPalestra(id) {
   if (!confirm('Tem certeza que deseja excluir esta palestra?')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_palestras')
       .update({ deletada: true })
       .eq('id', id);
@@ -323,7 +323,7 @@ async function salvarEnquete(event, id) {
 
   try {
     if (id) {
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_enquetes')
         .update(dados)
         .eq('id', id);
@@ -331,7 +331,7 @@ async function salvarEnquete(event, id) {
       if (error) throw error;
       alert('✅ Enquete atualizada!');
     } else {
-      const { error } = await supabase
+      const { error } = await supabaseModerador
         .from('cnv_enquetes')
         .insert(dados);
 
@@ -356,7 +356,7 @@ async function deletarEnquete(id) {
   if (!confirm('Tem certeza que deseja excluir esta enquete?')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_enquetes')
       .update({ deletada: true })
       .eq('id', id);
@@ -470,7 +470,7 @@ async function salvarQuiz(event) {
   }
 
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_quizzes')
       .insert({ nome });
 
@@ -503,7 +503,7 @@ async function deletarQuiz(id) {
   if (!confirm('Tem certeza que deseja excluir este quiz e todas as suas perguntas?')) return;
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseModerador
       .from('cnv_quizzes')
       .update({ deletado: true })
       .eq('id', id);
