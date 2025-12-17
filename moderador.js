@@ -1,47 +1,32 @@
 // ============================================
-// MODERADOR.JS - ARQUIVO PRINCIPAL
+// MODERADOR.JS - VERSÃO SIMPLIFICADA
 // Sistema CNV 2025
 // ============================================
 
+console.log('📋 Carregando moderador.js...');
+
 // ============================================
-// 1. CONFIGURAÇÃO SUPABASE
+// FUNÇÃO AUXILIAR: Aguardar Supabase
 // ============================================
 
-let supabase = null;
-
-// Aguardar Supabase estar pronto
-function aguardarSupabase() {
+function getSupabase() {
   return new Promise((resolve) => {
-    if (window.supabaseClient) {
-      supabase = window.supabaseClient;
-      resolve();
-    } else {
-      window.addEventListener('supabaseReady', () => {
-        supabase = window.supabaseClient;
-        resolve();
-      }, { once: true });
-      
-      // Fallback: tentar a cada 100ms por até 5 segundos
-      let tentativas = 0;
-      const intervalo = setInterval(() => {
-        if (window.supabaseClient) {
-          supabase = window.supabaseClient;
-          clearInterval(intervalo);
-          resolve();
-        } else if (++tentativas > 50) {
-          clearInterval(intervalo);
-          console.error('❌ Timeout: Supabase não carregou');
-          resolve(); // Resolve mesmo assim para não travar
-        }
-      }, 100);
-    }
+    const check = () => {
+      if (window.supabaseClient) {
+        resolve(window.supabaseClient);
+      } else {
+        setTimeout(check, 50);
+      }
+    };
+    check();
   });
 }
 
 // ============================================
-// 2. ESTADO GLOBAL
+// ESTADO GLOBAL
 // ============================================
 
+let supabase = null;
 let sessaoAtual = null;
 let config = null;
 let modoAtivo = 'aguardando';
@@ -69,33 +54,26 @@ function agendarAtualizarResultadoEnquete() {
     clearTimeout(timeoutAtualizarResultadoEnquete);
   }
   timeoutAtualizarResultadoEnquete = setTimeout(() => {
-    // Só atualiza se estivermos no modo ENQUETE
     if (modoAtivo === 'enquete') {
       if (typeof carregarResultadoEnquete === 'function') {
         carregarResultadoEnquete();
       } else if (typeof atualizarControle === 'function') {
-        // fallback, caso precise
         atualizarControle();
       }
     }
-  }, 300); // 300ms: dá uma suavizada se chover voto
+  }, 300);
 }
 
 // ============================================
-// 3. INICIALIZAÇÃO
+// INICIALIZAÇÃO
 // ============================================
 
 async function inicializar() {
   console.log('🚀 Inicializando moderador...');
   
   try {
-    // Aguardar Supabase estar pronto
-    await aguardarSupabase();
-    
-    if (!supabase) {
-      throw new Error('Supabase não está disponível');
-    }
-    
+    // Aguardar Supabase
+    supabase = await getSupabase();
     console.log('✅ Supabase conectado');
     
     // Carregar configuração
@@ -130,7 +108,7 @@ async function inicializar() {
 }
 
 // ============================================
-// 4. CARREGAR DADOS
+// CARREGAR DADOS
 // ============================================
 
 async function carregarConfig() {
@@ -214,7 +192,7 @@ async function carregarQuizzes() {
 }
 
 // ============================================
-// 5. REALTIME
+// REALTIME
 // ============================================
 
 async function conectarRealtime() {
@@ -248,22 +226,19 @@ async function conectarRealtime() {
   canalEnqueteVotos = supabase
     .channel('moderador_enquete_votos')
     .on('postgres_changes', {
-      event: '*',             // INSERT / DELETE / UPDATE (zera enquete também dispara)
+      event: '*',
       schema: 'public',
       table: 'cnv_enquete_votos'
     }, (payload) => {
-      // Segurança básica
       if (!sessaoAtual?.enquete_ativa_id) return;
 
       const novoVoto = payload.new || payload.old;
       if (!novoVoto) return;
 
-      // Só reagir à enquete que está ativa na sessão
       if (novoVoto.enquete_id !== sessaoAtual.enquete_ativa_id) return;
 
       console.log('🗳️ Mudança em votos da enquete ativa:', payload);
       
-      // Atualiza painel de resultado com debounce
       agendarAtualizarResultadoEnquete();
     })
     .subscribe();
@@ -284,20 +259,17 @@ async function conectarRealtime() {
     })
     .subscribe();
 
-  // Canal das perguntas em tempo real
   canalPerguntas = supabase
     .channel('moderador_perguntas')
     .on('postgres_changes', {
-      event: '*',                 // INSERT, UPDATE, DELETE
+      event: '*',
       schema: 'public',
       table: 'cnv_perguntas'
     }, (payload) => {
-      // Segurança básica: só atualizar se estivermos no modo PERGUNTAS
       if (modoAtivo !== 'perguntas') return;
 
       const pergunta = payload.new || payload.old;
       
-      // Se quiser, filtra pela palestra ativa
       if (sessaoAtual?.palestra_ativa_id && pergunta?.palestra_id !== sessaoAtual.palestra_ativa_id) {
         return;
       }
@@ -309,25 +281,22 @@ async function conectarRealtime() {
     })
     .subscribe();
   
-  console.log('✅ Realtime conectado (sessão + enquete + participantes + perguntas)');
+  console.log('✅ Realtime conectado');
 }
 
 // ============================================
-// 6. INTERFACE - NAVEGAÇÃO
+// INTERFACE - NAVEGAÇÃO
 // ============================================
 
 function abrirAba(aba) {
-  // Esconder todas
   document.getElementById('abaCadastros').classList.add('hidden');
   document.getElementById('abaControle').classList.add('hidden');
   document.getElementById('abaExportar').classList.add('hidden');
   
-  // Remover destaque dos tabs
   document.getElementById('tabCadastros').classList.remove('border-blue-500', 'text-blue-600');
   document.getElementById('tabControle').classList.remove('border-blue-500', 'text-blue-600');
   document.getElementById('tabExportar').classList.remove('border-blue-500', 'text-blue-600');
   
-  // Mostrar aba selecionada
   if (aba === 'cadastros') {
     document.getElementById('abaCadastros').classList.remove('hidden');
     document.getElementById('tabCadastros').classList.add('border-blue-500', 'text-blue-600');
@@ -342,17 +311,14 @@ function abrirAba(aba) {
 }
 
 function abrirSubAba(subAba) {
-  // Esconder todas
   document.getElementById('subAbaPalestras').classList.add('hidden');
   document.getElementById('subAbaEnquetes').classList.add('hidden');
   document.getElementById('subAbaQuizzes').classList.add('hidden');
   
-  // Remover destaque
   document.getElementById('subPalestras').classList.remove('bg-blue-600', 'text-white');
   document.getElementById('subEnquetes').classList.remove('bg-blue-600', 'text-white');
   document.getElementById('subQuizzes').classList.remove('bg-blue-600', 'text-white');
   
-  // Mostrar sub-aba selecionada
   if (subAba === 'palestras') {
     document.getElementById('subAbaPalestras').classList.remove('hidden');
     document.getElementById('subPalestras').classList.add('bg-blue-600', 'text-white');
@@ -366,7 +332,7 @@ function abrirSubAba(subAba) {
 }
 
 // ============================================
-// 7. MODO ATIVO
+// MODO ATIVO
 // ============================================
 
 async function mudarModo(novoModo) {
@@ -387,11 +353,9 @@ async function mudarModo(novoModo) {
 
     if (error) throw error;
 
-    // 🔹 Atualiza estado local imediatamente
     sessaoAtual = data || { ...(sessaoAtual || {}), modo: novoModo };
     modoAtivo = sessaoAtual.modo;
 
-    // 🔹 Atualiza a UI na hora
     atualizarBotoesModo();
     atualizarStatusModo();
     atualizarControle();
@@ -436,12 +400,10 @@ function atualizarStatusModo() {
 }
 
 function atualizarControle() {
-  // Esconder todos os controles
   document.getElementById('controlePerguntas').classList.add('hidden');
   document.getElementById('controleEnquetes').classList.add('hidden');
   document.getElementById('controleQuiz').classList.add('hidden');
   
-  // Mostrar controle do modo ativo
   if (modoAtivo === 'perguntas') {
     document.getElementById('controlePerguntas').classList.remove('hidden');
     carregarControlePerguntas();
@@ -456,7 +418,6 @@ function atualizarControle() {
 
 async function forcarRefreshParticipantes() {
   try {
-    // Garante que temos o metadata atual
     const metaAtual = (sessaoAtual && sessaoAtual.metadata) ? sessaoAtual.metadata : {};
 
     const novoToken = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
@@ -485,7 +446,7 @@ async function forcarRefreshParticipantes() {
 }
 
 // ============================================
-// 8. CONTROLE DO QR CODE
+// CONTROLE DO QR CODE
 // ============================================
 
 async function toggleQRCode() {
@@ -528,8 +489,9 @@ function atualizarBotaoQRCode() {
 }
 
 // ============================================
-// CONTINUA NOS PRÓXIMOS ARQUIVOS...
+// INICIALIZAR QUANDO A PÁGINA CARREGAR
 // ============================================
 
-// Inicializar quando a página carregar
 document.addEventListener('DOMContentLoaded', inicializar);
+
+console.log('✅ moderador.js carregado');
