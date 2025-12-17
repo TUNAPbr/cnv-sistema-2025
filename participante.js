@@ -45,17 +45,17 @@ function normalizarOpcoesEnquete(raw) {
 // CONFIGURAÇÃO SUPABASE
 // ============================================
 
-let supabase = null;
+let supabaseParticipante = null;
 
 // Aguardar Supabase estar pronto
 function aguardarSupabase() {
   return new Promise((resolve) => {
     if (window.supabaseClient) {
-      supabase = window.supabaseClient;
+      supabaseParticipante = window.supabaseClient;
       resolve();
     } else {
       window.addEventListener('supabaseReady', () => {
-        supabase = window.supabaseClient;
+        supabaseParticipante = window.supabaseClient;
         resolve();
       }, { once: true });
       
@@ -63,7 +63,7 @@ function aguardarSupabase() {
       let tentativas = 0;
       const intervalo = setInterval(() => {
         if (window.supabaseClient) {
-          supabase = window.supabaseClient;
+          supabaseParticipante = window.supabaseClient;
           clearInterval(intervalo);
           resolve();
         } else if (++tentativas > 50) {
@@ -104,7 +104,7 @@ async function inicializar() {
     // Aguardar Supabase estar pronto
     await aguardarSupabase();
     
-    if (!supabase) {
+    if (!supabaseParticipante) {
       throw new Error('Supabase não está disponível');
     }
     
@@ -136,7 +136,7 @@ function gerarDeviceId() {
 }
 
 async function carregarConfig() {
-  const { data } = await supabase
+  const { data } = await supabaseParticipante
     .from('cnv_config')
     .select('*')
     .eq('id', 1)
@@ -162,7 +162,7 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 async function carregarSessao() {
-  const { data } = await supabase
+  const { data } = await supabaseParticipante
     .from('cnv_sessao')
     .select('*')
     .eq('id', 1)
@@ -177,10 +177,10 @@ async function carregarSessao() {
 
 async function conectarRealtime() {
   if (canal) {
-    await supabase.removeChannel(canal);
+    await supabaseParticipante.removeChannel(canal);
   }
   
-  canal = supabase
+  canal = supabaseParticipante
     .channel('participante')
     .on('postgres_changes', {
       event: 'UPDATE',
@@ -280,7 +280,7 @@ async function renderizarPerguntas() {
   
   // Carregar palestra
   if (sessao.palestra_ativa_id) {
-    const { data } = await supabase
+    const { data } = await supabaseParticipante
       .from('cnv_palestras')
       .select('*')
       .eq('id', sessao.palestra_ativa_id)
@@ -479,7 +479,7 @@ function iniciarCountdownBloqueioPergunta(motivoOriginal) {
 }
 
 async function verificarPodePerguntar() {
-  const { data, error } = await supabase.rpc('cnv_pode_perguntar', {
+  const { data, error } = await supabaseParticipante.rpc('cnv_pode_perguntar', {
     p_palestra_id: palestraAtual.id,
     p_device_id: deviceId
   });
@@ -576,7 +576,7 @@ async function enviarPergunta(event) {
   }
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseParticipante
       .from('cnv_perguntas')
       .insert({
         palestra_id: palestraAtual.id,
@@ -614,7 +614,7 @@ async function renderizarEnquetes() {
   
   // Carregar enquete atual a partir da sessão
   if (sessao.enquete_ativa_id) {
-    const { data } = await supabase
+    const { data } = await supabaseParticipante
       .from('cnv_enquetes')
       .select('*')
       .eq('id', sessao.enquete_ativa_id)
@@ -682,7 +682,7 @@ async function renderizarEnquetes() {
   }
   
   // 3) Verificar se já votou
-  const { data: voto } = await supabase
+  const { data: voto } = await supabaseParticipante
     .from('cnv_enquete_votos')
     .select('*')
     .eq('enquete_id', enqueteAtual.id)
@@ -782,7 +782,7 @@ async function votarEnquete(opcao) {
   });
 
   try {
-    const { error } = await supabase
+    const { error } = await supabaseParticipante
       .from('cnv_enquete_votos')
       .insert({
         enquete_id: enqueteAtual.id,
@@ -831,7 +831,7 @@ async function renderizarQuiz() {
   
   // Carregar quiz
   if (sessao.quiz_ativo_id) {
-    const { data } = await supabase
+    const { data } = await supabaseParticipante
       .from('cnv_quizzes')
       .select('*')
       .eq('id', sessao.quiz_ativo_id)
@@ -893,7 +893,7 @@ async function renderizarQuiz() {
 }
 
 async function verificarCadastroQuiz() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseParticipante
     .from('cnv_quiz_participantes')
     .select('*')
     .eq('quiz_id', quizAtual.id)
@@ -979,7 +979,7 @@ async function cadastrarNoQuiz(event) {
   }
   
   try {
-    const { error } = await supabase
+    const { error } = await supabaseParticipante
       .from('cnv_quiz_participantes')
       .insert({
         quiz_id: quizAtual.id,
@@ -1123,7 +1123,7 @@ async function renderizarQuizPergunta() {
   
   // Carregar pergunta atual
   if (sessao.quiz_pergunta_atual_id) {
-    const { data } = await supabase
+    const { data } = await supabaseParticipante
       .from('cnv_quiz_perguntas')
       .select('*')
       .eq('id', sessao.quiz_pergunta_atual_id)
@@ -1135,7 +1135,7 @@ async function renderizarQuizPergunta() {
   if (!perguntaQuizAtual) return;
   
   // Verificar se já respondeu
-  const { data: resposta, error } = await supabase
+  const { data: resposta, error } = await supabaseParticipante
     .from('cnv_quiz_respostas')
     .select('*')
     .eq('quiz_pergunta_id', perguntaQuizAtual.id)
@@ -1359,7 +1359,7 @@ async function responderQuiz(opcao) {
     const correta = opcao === perguntaQuizAtual.resposta_correta;
     const pontos = correta ? Math.max(1000 - (tempoResposta * 10), 100) : 0;
     
-    const { error } = await supabase
+    const { error } = await supabaseParticipante
       .from('cnv_quiz_respostas')
       .insert({
         quiz_pergunta_id: perguntaQuizAtual.id,
@@ -1499,7 +1499,7 @@ async function renderizarQuizResultadoFinal() {
   let rankingGeral = [];
 
   try {
-    const { data, error } = await supabase.rpc('cnv_ranking_quiz', {
+    const { data, error } = await supabaseParticipante.rpc('cnv_ranking_quiz', {
       p_quiz_id: quizAtual.id
     });
 
